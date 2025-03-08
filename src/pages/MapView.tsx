@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, List } from "lucide-react";
 import EventMap from "@/components/map/EventMap";
-import StaticEventMap from "@/components/map/StaticEventMap";
-import { useState as useViewState } from "react";
 import EventDetailsDialog from "@/components/events/EventDetailsDialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,7 +29,6 @@ const MapView = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventDetailsDialogOpen, setEventDetailsDialogOpen] = useState(false);
-  const [useStaticMap, setUseStaticMap] = useViewState(true);
 
   // Load events from localStorage
   useEffect(() => {
@@ -66,35 +63,17 @@ const MapView = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold text-blue-800">Event Map</h1>
+          <h1 className="text-xl font-bold text-blue-800">Mapa de Eventos</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={useStaticMap ? "default" : "outline"}
-            size="sm"
-            onClick={() => setUseStaticMap(true)}
-            className="text-white border-blue-700"
-          >
-            Static Map
-          </Button>
-          <Button
-            variant={!useStaticMap ? "default" : "outline"}
-            size="sm"
-            onClick={() => setUseStaticMap(false)}
-            className="text-white border-blue-700"
-          >
-            Interactive Map
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBackClick}
-            className="flex items-center gap-2 text-blue-700 border-blue-700"
-          >
-            <List className="h-4 w-4" />
-            <span>List View</span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBackClick}
+          className="flex items-center gap-2 text-blue-700 border-blue-700"
+        >
+          <List className="h-4 w-4" />
+          <span>Visualização em Lista</span>
+        </Button>
       </header>
 
       {/* Main Container with Map and Event List */}
@@ -103,10 +82,10 @@ const MapView = () => {
         <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 bg-white">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-blue-800">
-              Running Events
+              Eventos de Corrida
             </h2>
             <p className="text-sm text-gray-500">
-              {events.length} events found
+              {events.length} eventos encontrados
             </p>
           </div>
           <ScrollArea className="h-[calc(100vh-9rem)]">
@@ -153,15 +132,7 @@ const MapView = () => {
 
         {/* Map Container */}
         <div className="flex-1">
-          {useStaticMap ? (
-            <StaticEventMap
-              events={events}
-              onEventClick={handleEventClick}
-              mapImageUrl="https://static.vecteezy.com/ti/vetor-gratis/p1/6434639-mapa-mundi-em-continentes-de-cores-diferentes-gratis-vetor.jpg"
-            />
-          ) : (
-            <EventMap events={events} onEventClick={handleEventClick} />
-          )}
+          <EventMap events={events} onEventClick={handleEventClick} />
         </div>
       </main>
 

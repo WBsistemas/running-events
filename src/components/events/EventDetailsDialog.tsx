@@ -91,7 +91,7 @@ const EventDetailsDialog = ({
             {event.title}
           </DialogTitle>
           <DialogDescription className="text-gray-600">
-            Organized by {event.organizer}
+            Organizado por {event.organizer}
           </DialogDescription>
         </DialogHeader>
 
@@ -128,7 +128,7 @@ const EventDetailsDialog = ({
         </div>
 
         <div className="my-4">
-          <h3 className="font-semibold text-lg mb-2">Description</h3>
+          <h3 className="font-semibold text-lg mb-2">Descrição</h3>
           <p className="text-gray-700">{event.description}</p>
         </div>
 
@@ -139,7 +139,7 @@ const EventDetailsDialog = ({
               className="w-full sm:w-auto"
               onClick={() => onOpenChange(false)}
             >
-              Close
+              Fechar
             </Button>
             <Button
               variant="destructive"
@@ -148,7 +148,7 @@ const EventDetailsDialog = ({
                 setDeleteDialogOpen(true);
               }}
             >
-              Delete Event
+              Excluir Evento
             </Button>
             <Button
               variant="outline"
@@ -157,14 +157,14 @@ const EventDetailsDialog = ({
                 if (onEdit) onEdit(event.id);
               }}
             >
-              Edit Event
+              Editar Evento
             </Button>
           </div>
           <Button
             className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white"
             onClick={() => window.open(event.registrationUrl, "_blank")}
           >
-            Register Now
+            Inscrever-se Agora
             <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
         </DialogFooter>
@@ -174,14 +174,14 @@ const EventDetailsDialog = ({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              event "{event.title}" and remove it from the listings.
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o
+              evento "{event.title}" e o removerá das listagens.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {
@@ -192,7 +192,7 @@ const EventDetailsDialog = ({
                 // Dialog will be closed by the delete handler
               }}
             >
-              Delete
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

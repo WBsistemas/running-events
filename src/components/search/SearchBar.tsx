@@ -14,7 +14,7 @@ interface SearchBarProps {
 const SearchBar = ({
   onSearch = () => {},
   onFilterClick = () => {},
-  placeholder = "Search for running events...",
+  placeholder = "Buscar eventos de corrida...",
   value = "",
   onChange,
 }: SearchBarProps) => {
@@ -55,7 +55,7 @@ const SearchBar = ({
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
-          Search
+          Buscar
         </Button>
         <Button
           type="button"
@@ -64,7 +64,7 @@ const SearchBar = ({
           className="border-gray-300 hover:bg-gray-100 flex items-center gap-2"
         >
           <Filter className="h-4 w-4" />
-          Filters
+          Filtros
         </Button>
       </form>
     </div>

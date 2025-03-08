@@ -14,27 +14,27 @@ const BottomNavigation = ({ className }: BottomNavigationProps = {}) => {
   const navItems = [
     {
       icon: Home,
-      label: "Home",
+      label: "Início",
       path: "/",
     },
     {
       icon: Search,
-      label: "Explore",
+      label: "Explorar",
       path: "/explore",
     },
     {
       icon: PlusCircle,
-      label: "Add Event",
+      label: "Adicionar Evento",
       path: "/add-event",
     },
     {
       icon: Map,
-      label: "Map",
+      label: "Mapa",
       path: "/map",
     },
     {
       icon: User,
-      label: "Profile",
+      label: "Perfil",
       path: "/profile",
     },
   ];

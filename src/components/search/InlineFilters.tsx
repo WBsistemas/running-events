@@ -1,12 +1,5 @@
 import React, { useState } from "react";
 import { Calendar, MapPin, Ruler, Tag, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,10 +22,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
-interface FilterDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+interface InlineFiltersProps {
   onApplyFilters?: (filters: FilterOptions) => void;
+  onClose?: () => void;
+  initialFilters?: FilterOptions;
 }
 
 export interface FilterOptions {
@@ -44,19 +37,21 @@ export interface FilterOptions {
   keyword: string;
 }
 
-const FilterDialog = ({
-  open = true,
-  onOpenChange = () => {},
+const InlineFilters = ({
   onApplyFilters = () => {},
-}: FilterDialogProps) => {
-  const [filters, setFilters] = useState<FilterOptions>({
-    dateRange: undefined,
-    distances: [],
-    eventTypes: [],
-    locationRadius: 25,
-    location: "",
-    keyword: "",
-  });
+  onClose = () => {},
+  initialFilters,
+}: InlineFiltersProps) => {
+  const [filters, setFilters] = useState<FilterOptions>(
+    initialFilters || {
+      dateRange: undefined,
+      distances: [],
+      eventTypes: [],
+      locationRadius: 25,
+      location: "",
+      keyword: "",
+    },
+  );
 
   const distanceOptions = [
     "5K",
@@ -152,7 +147,7 @@ const FilterDialog = ({
 
   const handleApplyFilters = () => {
     onApplyFilters(filters);
-    onOpenChange(false);
+    onClose();
   };
 
   const handleResetFilters = () => {
@@ -178,23 +173,26 @@ const FilterDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-blue-800 flex items-center justify-between">
-            <span>Filtrar Eventos</span>
-            {getActiveFilterCount() > 0 && (
-              <Badge
-                variant="secondary"
-                className="ml-2 bg-blue-100 text-blue-800"
-              >
-                {getActiveFilterCount()} active
-              </Badge>
-            )}
-          </DialogTitle>
-        </DialogHeader>
+    <div className="w-full bg-white rounded-lg shadow-sm p-4 mb-4 animate-in slide-in-from-top-5 duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-blue-800 flex items-center">
+          <span>Filtrar Eventos</span>
+          {getActiveFilterCount() > 0 && (
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-blue-100 text-blue-800"
+            >
+              {getActiveFilterCount()} ativo(s)
+            </Badge>
+          )}
+        </h3>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
 
-        <div className="space-y-6 py-4">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date Range Filter */}
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
@@ -229,7 +227,7 @@ const FilterDialog = ({
                   defaultMonth={filters.dateRange?.from}
                   selected={filters.dateRange}
                   onSelect={handleDateRangeChange}
-                  numberOfMonths={2}
+                  numberOfMonths={1}
                 />
               </PopoverContent>
             </Popover>
@@ -254,7 +252,7 @@ const FilterDialog = ({
                 className="whitespace-nowrap"
                 onClick={handleUseCurrentLocation}
               >
-                Localização Atual
+                Atual
               </Button>
             </div>
             <div className="space-y-2 mt-2">
@@ -276,14 +274,16 @@ const FilterDialog = ({
               </div>
             </div>
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Distance Filter */}
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <Ruler className="h-4 w-4 text-green-600" />
               Distância
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {distanceOptions.map((distance) => (
                 <Button
                   key={distance}
@@ -321,114 +321,114 @@ const FilterDialog = ({
               ))}
             </div>
           </div>
-
-          {/* Keyword Filter */}
-          <div className="space-y-2">
-            <label
-              htmlFor="keyword"
-              className="text-sm font-medium flex items-center gap-2"
-            >
-              <Tag className="h-4 w-4 text-green-600" />
-              Palavra-chave
-            </label>
-            <Input
-              id="keyword"
-              placeholder="Buscar por palavra-chave"
-              value={filters.keyword}
-              onChange={handleKeywordChange}
-            />
-          </div>
-
-          {/* Active Filters */}
-          {getActiveFilterCount() > 0 && (
-            <div className="space-y-2 border-t pt-4">
-              <label className="text-sm font-medium">Filtros Ativos:</label>
-              <div className="flex flex-wrap gap-2">
-                {filters.dateRange?.from && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                  >
-                    <span>
-                      {format(filters.dateRange.from, "MMM dd")}
-                      {filters.dateRange.to &&
-                        `- ${format(filters.dateRange.to, "MMM dd")}`}
-                    </span>
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          dateRange: undefined,
-                        }))
-                      }
-                    />
-                  </Badge>
-                )}
-
-                {filters.location && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                  >
-                    <span>{filters.location}</span>
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() =>
-                        setFilters((prev) => ({ ...prev, location: "" }))
-                      }
-                    />
-                  </Badge>
-                )}
-
-                {filters.distances.map((distance) => (
-                  <Badge
-                    key={distance}
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                  >
-                    <span>{distance}</span>
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => handleDistanceToggle(distance)}
-                    />
-                  </Badge>
-                ))}
-
-                {filters.eventTypes.map((type) => (
-                  <Badge
-                    key={type}
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                  >
-                    <span>{type}</span>
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => handleEventTypeToggle(type)}
-                    />
-                  </Badge>
-                ))}
-
-                {filters.keyword && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                  >
-                    <span>"{filters.keyword}"</span>
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() =>
-                        setFilters((prev) => ({ ...prev, keyword: "" }))
-                      }
-                    />
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
-        <DialogFooter className="flex justify-between sm:justify-between gap-2">
+        {/* Keyword Filter */}
+        <div className="space-y-2">
+          <label
+            htmlFor="keyword"
+            className="text-sm font-medium flex items-center gap-2"
+          >
+            <Tag className="h-4 w-4 text-green-600" />
+            Palavra-chave
+          </label>
+          <Input
+            id="keyword"
+            placeholder="Buscar por palavra-chave"
+            value={filters.keyword}
+            onChange={handleKeywordChange}
+          />
+        </div>
+
+        {/* Active Filters */}
+        {getActiveFilterCount() > 0 && (
+          <div className="space-y-2 border-t pt-4">
+            <label className="text-sm font-medium">Filtros Ativos:</label>
+            <div className="flex flex-wrap gap-2">
+              {filters.dateRange?.from && (
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
+                >
+                  <span>
+                    {format(filters.dateRange.from, "MMM dd")}
+                    {filters.dateRange.to &&
+                      `- ${format(filters.dateRange.to, "MMM dd")}`}
+                  </span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        dateRange: undefined,
+                      }))
+                    }
+                  />
+                </Badge>
+              )}
+
+              {filters.location && (
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
+                >
+                  <span>{filters.location}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, location: "" }))
+                    }
+                  />
+                </Badge>
+              )}
+
+              {filters.distances.map((distance) => (
+                <Badge
+                  key={distance}
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
+                >
+                  <span>{distance}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => handleDistanceToggle(distance)}
+                  />
+                </Badge>
+              ))}
+
+              {filters.eventTypes.map((type) => (
+                <Badge
+                  key={type}
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
+                >
+                  <span>{type}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => handleEventTypeToggle(type)}
+                  />
+                </Badge>
+              ))}
+
+              {filters.keyword && (
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
+                >
+                  <span>"{filters.keyword}"</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, keyword: "" }))
+                    }
+                  />
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-between pt-4 border-t">
           <Button
             variant="outline"
             onClick={handleResetFilters}
@@ -442,10 +442,10 @@ const FilterDialog = ({
           >
             Aplicar Filtros
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default FilterDialog;
+export default InlineFilters;

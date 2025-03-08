@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 const Header = ({
-  title = "Running Events",
+  title = "Eventos de Corrida",
   logoSize = 24,
   onLogoClick = () => console.log("Logo clicked"),
 }: HeaderProps) => {
@@ -33,7 +33,7 @@ const Header = ({
           onClick={() => navigate("/map")}
         >
           <Map className="h-4 w-4" />
-          Map View
+          Visualizar Mapa
         </Button>
 
         <Button
@@ -41,11 +41,11 @@ const Header = ({
           size="sm"
           className="text-blue-700 hover:text-blue-800 hover:bg-blue-50"
         >
-          Sign In
+          Entrar
         </Button>
 
         <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-          Register
+          Cadastrar
         </Button>
       </div>
     </header>
