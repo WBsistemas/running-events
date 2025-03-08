@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useEvents } from "@/hooks/useSupabase";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, List } from "lucide-react";
 import EventMap from "@/components/map/EventMap";
@@ -30,13 +31,34 @@ const MapView = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventDetailsDialogOpen, setEventDetailsDialogOpen] = useState(false);
 
-  // Load events from localStorage
+  // Usar o hook useEvents para buscar eventos do Supabase
+  const { events: supabaseEvents, loading } = useEvents();
+
+  // Carregar eventos do Supabase quando o componente montar
   useEffect(() => {
-    const savedEvents = localStorage.getItem("runningEvents");
-    if (savedEvents) {
-      setEvents(JSON.parse(savedEvents));
+    if (supabaseEvents.length > 0) {
+      // Mapear os eventos do Supabase para o formato esperado pelo componente
+      const mappedEvents = supabaseEvents.map((event) => ({
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        time: event.time,
+        location: event.location,
+        distance: event.distance,
+        participants: event.participants,
+        description: event.description,
+        organizer: "Organizer", // Placeholder até implementarmos a tabela de organizadores
+        imageUrl: event.image_url,
+        registrationUrl:
+          event.registration_url || "https://example.com/register",
+        price: event.price,
+        eventType: event.event_type,
+        latitude: event.latitude || undefined,
+        longitude: event.longitude || undefined,
+      }));
+      setEvents(mappedEvents);
     }
-  }, []);
+  }, [supabaseEvents]);
 
   const handleEventClick = (eventId: string) => {
     setSelectedEventId(eventId);
