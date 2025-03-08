@@ -991,10 +991,10 @@ const Home = () => {
       {selectedEvent && (
         <EventDetailsDialog
           open={eventDetailsDialogOpen}
-          onOpenChange={setEventDetailsDialogOpen}
+          onOpenChange={(open: boolean) => setEventDetailsDialogOpen(open)}
           event={selectedEvent}
-          onDelete={handleDeleteEvent}
-          onEdit={handleEditEvent}
+          onDelete={(eventId?: string) => eventId && handleDeleteEvent(eventId)}
+          onEdit={(eventId?: string) => eventId && handleEditEvent(eventId)}
         />
       )}
 

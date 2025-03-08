@@ -31,8 +31,8 @@ import {
 interface EventDetailsDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onDelete?: (eventId: string) => void;
-  onEdit?: (eventId: string) => void;
+  onDelete?: (eventId?: string) => void;
+  onEdit?: (eventId?: string) => void;
   event?: {
     id: string;
     title: string;
@@ -51,9 +51,9 @@ interface EventDetailsDialogProps {
 
 const EventDetailsDialog = ({
   open = true,
-  onOpenChange = () => {},
-  onDelete = () => {},
-  onEdit = () => {},
+  onOpenChange = (open: boolean) => {},
+  onDelete = (eventId?: string) => {},
+  onEdit = (eventId?: string) => {},
   event = {
     id: "1",
     title: "City Marathon 2023",

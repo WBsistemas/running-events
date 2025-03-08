@@ -140,7 +140,7 @@ const MapView = () => {
       {selectedEvent && (
         <EventDetailsDialog
           open={eventDetailsDialogOpen}
-          onOpenChange={setEventDetailsDialogOpen}
+          onOpenChange={(open: boolean) => setEventDetailsDialogOpen(open)}
           event={selectedEvent}
         />
       )}
