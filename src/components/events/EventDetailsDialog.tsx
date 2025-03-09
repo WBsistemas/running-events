@@ -44,32 +44,18 @@ interface EventDetailsDialogProps {
     description: string;
     organizer: string;
     imageUrl: string;
+    capacity: number;
     registrationUrl: string;
     price: string;
   };
 }
 
-const EventDetailsDialog = ({
-  open = true,
-  onOpenChange = (open: boolean) => {},
-  onDelete = (eventId?: string) => {},
-  onEdit = (eventId?: string) => {},
-  event = {
-    id: "1",
-    title: "City Marathon 2023",
-    date: "June 15, 2023",
-    time: "7:00 AM",
-    location: "Central Park, New York",
-    distance: "42.2 km",
-    participants: 5000,
-    description:
-      "Join us for the annual City Marathon! This scenic route takes you through the heart of the city with spectacular views and cheering crowds. Suitable for experienced runners looking for a challenge.",
-    organizer: "City Running Club",
-    imageUrl:
-      "https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    registrationUrl: "https://example.com/register",
-    price: "$75.00",
-  },
+const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
+  open,
+  onOpenChange,
+  onDelete,
+  onEdit,
+  event,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   return (
@@ -78,58 +64,58 @@ const EventDetailsDialog = ({
         <div className="relative h-56 w-full overflow-hidden -mt-6 -mx-6 mb-2">
           <img
             src={
-              event.imageUrl ||
+              event?.imageUrl ||
               "https://images.unsplash.com/photo-1486218119243-13883505764c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
             }
-            alt={event.title}
+            alt={event?.title}
             className="w-full h-full object-cover object-center"
           />
         </div>
 
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-blue-800">
-            {event.title}
+            {event?.title}
           </DialogTitle>
           <DialogDescription className="text-gray-600">
-            Organizado por {event.organizer}
+            Organizado por {event?.organizer}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 my-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-green-600" />
-            <span>{event.date}</span>
+            <span>{event?.date}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-green-600" />
-            <span>{event.time}</span>
+            <span>{event?.time}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-green-600" />
-            <span>{event.location}</span>
+            <span>{event?.location}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-green-600" />
-            <span>{event.distance}</span>
+            <span>{event?.distance}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-green-600" />
-            <span>{event.participants} participants</span>
+            <span>{event?.capacity} capacidade</span>
           </div>
 
           <div className="flex items-center gap-2">
             <Award className="h-5 w-5 text-green-600" />
-            <span>{event.price}</span>
+            <span>{event?.price}</span>
           </div>
         </div>
 
         <div className="my-4">
           <h3 className="font-semibold text-lg mb-2">Descrição</h3>
-          <p className="text-gray-700">{event.description}</p>
+          <p className="text-gray-700">{event?.description}</p>
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-4">
@@ -137,7 +123,7 @@ const EventDetailsDialog = ({
             <Button
               variant="outline"
               className="w-full sm:w-auto"
-              onClick={() => onOpenChange(false)}
+              onClick={() => onOpenChange && onOpenChange(false)}
             >
               Fechar
             </Button>
@@ -154,7 +140,7 @@ const EventDetailsDialog = ({
               variant="outline"
               className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
               onClick={() => {
-                if (onEdit) onEdit(event.id);
+                if (onEdit && event) onEdit(event.id);
               }}
             >
               Editar Evento
@@ -162,7 +148,7 @@ const EventDetailsDialog = ({
           </div>
           <Button
             className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white"
-            onClick={() => window.open(event.registrationUrl, "_blank")}
+            onClick={() => event?.registrationUrl && window.open(event.registrationUrl, "_blank")}
           >
             Inscrever-se Agora
             <ExternalLink className="ml-2 h-4 w-4" />
@@ -177,7 +163,7 @@ const EventDetailsDialog = ({
             <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação não pode ser desfeita. Isso excluirá permanentemente o
-              evento "{event.title}" e o removerá das listagens.
+              evento "{event?.title}" e o removerá das listagens.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -185,7 +171,7 @@ const EventDetailsDialog = ({
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {
-                if (onDelete) {
+                if (onDelete && event) {
                   console.log("Deleting event from dialog:", event.id);
                   onDelete(event.id);
                 }

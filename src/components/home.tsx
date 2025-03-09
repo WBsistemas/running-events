@@ -10,7 +10,6 @@ import EventList from "./events/EventList";
 import EventDetailsDialog from "./events/EventDetailsDialog";
 import AddEventDialog from "./events/AddEventDialog";
 import EditEventDialog from "./events/EditEventDialog";
-import BottomNavigation from "./layout/BottomNavigation";
 import FloatingActionButton from "./layout/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,7 @@ interface Event {
   registrationUrl: string;
   price: string;
   eventType?: string;
+  capacity: number;
 }
 
 const Home = () => {
@@ -68,8 +68,7 @@ const Home = () => {
 
       const { data, error } = await supabase
         .from("events")
-        .select("*")
-        .order("date", { ascending: true });
+        .select("*");
 
       if (error) {
         throw error;
@@ -88,7 +87,7 @@ const Home = () => {
           distance: event.distance,
           participants: event.participants,
           description: event.description,
-          organizer: "Organizer", // Placeholder até implementarmos a tabela de organizadores
+          organizer: "Organizador", // Placeholder até implementarmos a tabela de organizadores
           imageUrl: event.image_url,
           registrationUrl:
             event.registration_url || "https://example.com/register",
@@ -96,6 +95,7 @@ const Home = () => {
           eventType: event.event_type,
           latitude: event.latitude || undefined,
           longitude: event.longitude || undefined,
+          capacity: event.capacity,
         }));
         setEvents(mappedEvents);
       } else {
@@ -298,9 +298,9 @@ const Home = () => {
       }
 
       // Formatar a data para o formato esperado pelo Supabase
-      const formattedDate = new Date(data.date).toLocaleDateString("en-US", {
+      const formattedDate = new Date(data.date).toLocaleDateString("pt-BR", {
+        day: "2-digit",
         month: "long",
-        day: "numeric",
         year: "numeric",
       });
 
@@ -380,9 +380,9 @@ const Home = () => {
       const coordinates = await geocodeAddress(data.location);
 
       // Formatar a data para o formato esperado pelo Supabase
-      const formattedDate = new Date(data.date).toLocaleDateString("en-US", {
+      const formattedDate = new Date(data.date).toLocaleDateString("pt-BR", {
+        day: "2-digit",
         month: "long",
-        day: "numeric",
         year: "numeric",
       });
 
@@ -434,6 +434,7 @@ const Home = () => {
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
         }),
+        capacity: parseInt(data.capacity) || 0,
       };
 
       // Add the new event to the events array with animation
@@ -583,12 +584,17 @@ const Home = () => {
                 >
                   <span>
                     Data:{" "}
-                    {new Intl.DateTimeFormat("en-US", {
-                      month: "short",
-                      day: "numeric",
+                    {new Intl.DateTimeFormat("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric"
                     }).format(activeFilters.dateRange.from)}
                     {activeFilters.dateRange.to &&
-                      ` - ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(activeFilters.dateRange.to)}`}
+                      ` - ${new Intl.DateTimeFormat("pt-BR", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric"
+                      }).format(activeFilters.dateRange.to)}`}
                   </span>
                   <X
                     className="h-3 w-3 cursor-pointer"
@@ -650,15 +656,6 @@ const Home = () => {
           </div>
         )}
 
-        {/* Results Count */}
-        <div className="w-full max-w-7xl mt-4 px-2">
-          <p className="text-sm text-gray-600">
-            Mostrando {filteredEvents.length}{" "}
-            {filteredEvents.length === 1 ? "evento" : "eventos"}
-            {hasActiveFilters ? " com filtros aplicados" : ""}
-          </p>
-        </div>
-
         {/* Event List */}
         <div className="w-full max-w-7xl mt-2 flex-1">
           {filteredEvents.length > 0 ? (
@@ -668,29 +665,6 @@ const Home = () => {
               onMapViewClick={(eventId) => {
                 // Navigate to map view with the selected event
                 navigate(`/map?event=${eventId}`);
-              }}
-              onFavoriteClick={(eventId) => {
-                // Add to favorites (could be implemented with localStorage)
-                toast({
-                  title: "Evento adicionado aos favoritos",
-                  description:
-                    "Você pode acessar seus favoritos no seu perfil.",
-                  variant: "success",
-                });
-              }}
-              onShareClick={(eventId, platform) => {
-                // Share event (in a real app, this would open share dialogs)
-                const event = events.find((e) => e.id === eventId);
-                if (!event) return;
-
-                const shareText = `Confira este evento de corrida: ${event.title} em ${event.location} no dia ${event.date}`;
-
-                // In a real app, you'd use the Web Share API or platform-specific sharing
-                toast({
-                  title: "Compartilhar evento",
-                  description: `Compartilhando "${event.title}" no ${platform || "WhatsApp"}.`,
-                  variant: "success",
-                });
               }}
               featuredEvents={events
                 .filter(
@@ -725,8 +699,6 @@ const Home = () => {
           icon={<Plus className="h-6 w-6 text-white" />}
         />
       </main>
-
-      {/* Bottom Navigation removida */}
 
       {/* Toast notifications */}
       <Toaster />

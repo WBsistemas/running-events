@@ -4,8 +4,6 @@ import Home from "./components/home";
 import MapView from "./pages/MapView";
 import routes from "tempo-routes";
 
-const AddEventPage = lazy(() => import("./pages/AddEventPage"));
-
 function App() {
   return (
     <Suspense
@@ -22,7 +20,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/map" element={<MapView />} />
-          <Route path="/add-event" element={<AddEventPage />} />
           {import.meta.env.VITE_TEMPO === "true" && (
             <Route path="/tempobook/*" element={<div />} />
           )}

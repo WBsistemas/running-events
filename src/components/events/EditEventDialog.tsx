@@ -57,6 +57,7 @@ interface Event {
   registrationUrl: string;
   price: string;
   eventType?: string;
+  capacity: number;
 }
 
 const EditEventDialog = ({
@@ -88,7 +89,7 @@ const EditEventDialog = ({
       time: event?.time || "",
       location: event?.location || "",
       distance: event?.distance || "",
-      capacity: event?.participants ? String(event.participants) : "",
+      capacity: event?.capacity ? String(event.capacity) : "",
       description: event?.description || "",
       imageUrl: event?.imageUrl || "",
       price: event ? parsePrice(event.price) : "",
@@ -104,7 +105,7 @@ const EditEventDialog = ({
         time: event.time,
         location: event.location,
         distance: event.distance,
-        capacity: String(event.participants),
+        capacity: String(event.capacity),
         description: event.description,
         imageUrl: event.imageUrl,
         price: parsePrice(event.price),

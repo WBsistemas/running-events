@@ -1,4 +1,3 @@
-import React from "react";
 import { useForm } from "react-hook-form";
 import {
   Calendar,
@@ -7,7 +6,6 @@ import {
   Trophy,
   Users,
   Info,
-  Check,
 } from "lucide-react";
 
 import {

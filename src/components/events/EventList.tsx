@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import EventCard from "./EventCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LayoutGrid,
   Calendar,
   List,
   MapPin,
-  Heart,
-  Share2,
-  Clock,
   Users,
   Award,
   Trophy,
@@ -16,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -34,14 +29,13 @@ interface Event {
   participants?: number;
   price?: string;
   eventType?: string;
+  capacity?: number;
 }
 
 interface EventListProps {
   events?: Event[];
   onEventClick?: (eventId: string) => void;
   onMapViewClick?: (eventId: string) => void;
-  onFavoriteClick?: (eventId: string) => void;
-  onShareClick?: (eventId: string, platform: string) => void;
   featuredEvents?: Event[];
 }
 
@@ -49,9 +43,6 @@ const EventList = ({
   events = [],
   onEventClick = (eventId) => console.log(`Event clicked: ${eventId}`),
   onMapViewClick = (eventId) => console.log(`Map view for event: ${eventId}`),
-  onFavoriteClick = (eventId) => console.log(`Favorite event: ${eventId}`),
-  onShareClick = (eventId, platform) =>
-    console.log(`Share event ${eventId} on ${platform}`),
   featuredEvents,
 }: EventListProps) => {
   // Get view mode from localStorage or default to grid
@@ -68,6 +59,15 @@ const EventList = ({
   // Format date to show month and day more visibly
   const formatDate = (dateString: string) => {
     try {
+      // Verifica se a data já está no formato brasileiro (ex: "5 de abril de 2025")
+      if (dateString.includes(" de ")) {
+        const parts = dateString.split(" de ");
+        const day = parseInt(parts[0]);
+        let month = parts[1].split(" ")[0].substring(0, 3).toUpperCase();
+        return { month, day };
+      }
+
+      // Tenta converter a string para um objeto Date
       const date = new Date(dateString);
       const month = date
         .toLocaleString("pt-BR", { month: "short" })
@@ -75,76 +75,62 @@ const EventList = ({
       const day = date.getDate();
       return { month, day };
     } catch (e) {
-      // Fallback for parsing errors
+      // Fallback para erros de parsing
       const parts = dateString.split(" ");
       return {
         month: parts[0].substring(0, 3).toUpperCase(),
-        day: parseInt(parts[1]) || "",
+        day: parseInt(parts[1]) || 1,
       };
     }
   };
 
-  // Group events by month
-  const eventsByMonth = useMemo(() => {
-    const months = {};
-
-    // Sort events by date
-    const sortedEvents = [...events].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
-
-    sortedEvents.forEach((event) => {
-      // Extract month and year from the date
-      const dateParts = event.date.split(" ");
-      if (dateParts.length >= 2) {
-        const englishMonth = dateParts[0]; // e.g., "June"
-        const year = dateParts[dateParts.length - 1]; // e.g., "2023"
-
-        // Convert English month to Portuguese
-        const monthTranslations = {
-          January: "Janeiro",
-          February: "Fevereiro",
-          March: "Março",
-          April: "Abril",
-          May: "Maio",
-          June: "Junho",
-          July: "Julho",
-          August: "Agosto",
-          September: "Setembro",
-          October: "Outubro",
-          November: "Novembro",
-          December: "Dezembro",
-        };
-
-        const portugueseMonth = monthTranslations[englishMonth] || englishMonth;
-        const monthYear = `${portugueseMonth} ${year}`;
-
-        if (!months[monthYear]) {
-          months[monthYear] = [];
-        }
-        months[monthYear].push(event);
-      }
-    });
-
-    return months;
-  }, [events]);
 
   // Group events by day for calendar view
   const eventsByDay = useMemo(() => {
-    const days = {};
+    const days: Record<string, Event[]> = {};
 
     events.forEach((event) => {
       try {
-        const date = new Date(event.date);
-        const dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+        let dayKey: string;
+
+        // Verifica se a data está no formato brasileiro (ex: "5 de abril de 2025")
+        if (typeof event.date === 'string' && event.date.includes(" de ")) {
+          const parts = event.date.split(" de ");
+          const day = parseInt(parts[0]);
+          const month = parts[1].split(" ")[0].toLowerCase();
+
+          // Extrai o ano ou usa o ano atual
+          let yearStr = "";
+          if (parts[1].includes(" ")) {
+            const lastPart = parts[1].split(" ");
+            yearStr = lastPart[lastPart.length - 1];
+          } else {
+            yearStr = new Date().getFullYear().toString();
+          }
+          const year = parseInt(yearStr);
+
+          // Mapeia nomes de meses em português para números
+          const monthMap: Record<string, number> = {
+            'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3,
+            'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7,
+            'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
+          };
+
+          // Cria uma data com os componentes extraídos
+          const date = new Date(year, monthMap[month] || 0, day);
+          dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+        } else {
+          // Formato de data padrão
+          const date = new Date(event.date);
+          dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+        }
 
         if (!days[dayKey]) {
           days[dayKey] = [];
         }
         days[dayKey].push(event);
       } catch (e) {
+        console.log("Erro ao processar data do evento:", event.date, e);
         // Skip events with invalid dates
       }
     });
@@ -217,12 +203,6 @@ const EventList = ({
     return (
       event.price === "Free" || event.price === "$0.00" || event.price === "0"
     );
-  };
-
-  // Calculate available spots
-  const getAvailableSpots = (event: Event) => {
-    // This is a placeholder - in a real app, you'd subtract registrations from capacity
-    return event.participants || 0;
   };
 
   // Render featured events carousel - Removed as requested
@@ -340,11 +320,11 @@ const EventList = ({
                           </span>
                         </div>
 
-                        {event.participants && (
+                        {event.capacity && (
                           <div className="flex items-center gap-2 text-sm">
                             <Users className="h-4 w-4 text-green-600 flex-shrink-0" />
                             <span className="text-gray-600">
-                              {getAvailableSpots(event)} participantes
+                              {event.capacity} capacidade
                             </span>
                           </div>
                         )}
@@ -381,48 +361,6 @@ const EventList = ({
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Ver no mapa</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-gray-500 hover:text-red-500"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onFavoriteClick(event.id);
-                                  }}
-                                >
-                                  <Heart className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Adicionar aos favoritos</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-gray-500 hover:text-blue-500"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onShareClick(event.id, "menu");
-                                  }}
-                                >
-                                  <Share2 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Compartilhar</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -496,11 +434,11 @@ const EventList = ({
                           </span>
                         </div>
 
-                        {event.participants && (
+                        {event.capacity && (
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-green-600" />
                             <span className="text-gray-600">
-                              {getAvailableSpots(event)} participantes
+                              {event.capacity} capacidade
                             </span>
                           </div>
                         )}
@@ -542,30 +480,6 @@ const EventList = ({
                             <span className="hidden sm:inline">
                               Ver no Mapa
                             </span>
-                          </Button>
-
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-gray-500 hover:text-red-500"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onFavoriteClick(event.id);
-                            }}
-                          >
-                            <Heart className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-gray-500 hover:text-blue-500"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onShareClick(event.id, "menu");
-                            }}
-                          >
-                            <Share2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -624,18 +538,16 @@ const EventList = ({
                     return (
                       <div
                         key={index}
-                        className={`min-h-[100px] border rounded-md p-1 ${!dayData.day ? "bg-gray-50" : ""} ${
-                          isToday
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200"
-                        } ${hasEvents ? "cursor-pointer hover:bg-blue-50" : ""}`}
+                        className={`min-h-[100px] border rounded-md p-1 ${!dayData.day ? "bg-gray-50" : ""} ${isToday
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200"
+                          } ${hasEvents ? "cursor-pointer hover:bg-blue-50" : ""}`}
                       >
                         {dayData.day && (
                           <>
                             <div
-                              className={`text-right text-sm font-medium ${
-                                isToday ? "text-blue-700" : "text-gray-700"
-                              }`}
+                              className={`text-right text-sm font-medium ${isToday ? "text-blue-700" : "text-gray-700"
+                                }`}
                             >
                               {dayData.day}
                             </div>

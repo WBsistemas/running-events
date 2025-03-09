@@ -35,18 +35,6 @@ const Header = ({
           <Map className="h-4 w-4" />
           Visualizar Mapa
         </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-blue-700 hover:text-blue-800 hover:bg-blue-50"
-        >
-          Entrar
-        </Button>
-
-        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-          Cadastrar
-        </Button>
       </div>
     </header>
   );
