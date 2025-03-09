@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import Header from "./layout/Header";
 import SearchBar from "./search/SearchBar";
-import { FilterOptions } from "./search/FilterDialog";
-import InlineFilters from "./search/InlineFilters";
 import EventList from "./events/EventList";
 import EventDetailsDialog from "./events/EventDetailsDialog";
 import AddEventDialog from "./events/AddEventDialog";
 import EditEventDialog from "./events/EditEventDialog";
 import FloatingActionButton from "./layout/FloatingActionButton";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "./ui/button";
+import { useToast } from "./ui/use-toast";
 import { EventService } from "@/services/supabaseService";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -33,31 +28,23 @@ interface Event {
   price: string;
   eventType?: string;
   capacity: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 const Home = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   // State for filters
-  const [showFilters, setShowFilters] = useState(false);
   const [eventDetailsDialogOpen, setEventDetailsDialogOpen] = useState(false);
   const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilters, setActiveFilters] = useState<FilterOptions>({
-    dateRange: undefined,
-    distances: [],
-    eventTypes: [],
-    locationRadius: 25,
-    location: "",
-    keyword: "",
-  });
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-
-  // Carregar eventos diretamente do Supabase
   const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   // Função para buscar eventos
@@ -78,7 +65,7 @@ const Home = () => {
 
       if (data && data.length > 0) {
         // Mapear os eventos do Supabase para o formato esperado pelo componente
-        const mappedEvents = data.map((event) => ({
+        const mappedEvents = data.map((event: any) => ({
           id: event.id,
           title: event.title,
           date: event.date,
@@ -118,9 +105,6 @@ const Home = () => {
     fetchEvents();
   }, []);
 
-  // Hook useEvents já importado no topo do arquivo
-
-  // Apply filters to events
   useEffect(() => {
     let result = [...events];
 
@@ -135,93 +119,12 @@ const Home = () => {
       );
     }
 
-    // Apply keyword filter
-    if (activeFilters.keyword) {
-      const keyword = activeFilters.keyword.toLowerCase();
-      result = result.filter(
-        (event) =>
-          event.title.toLowerCase().includes(keyword) ||
-          event.location.toLowerCase().includes(keyword) ||
-          event.description.toLowerCase().includes(keyword) ||
-          (event.eventType && event.eventType.toLowerCase().includes(keyword)),
-      );
-    }
-
-    // Apply location filter
-    if (
-      activeFilters.location &&
-      activeFilters.location !== "Current Location"
-    ) {
-      const location = activeFilters.location.toLowerCase();
-      result = result.filter((event) =>
-        event.location.toLowerCase().includes(location),
-      );
-    }
-
-    // Apply distance filter
-    if (activeFilters.distances.length > 0) {
-      result = result.filter((event) => {
-        // Handle comma-separated distances
-        const eventDistances = event.distance.split(",").map((d) => d.trim());
-
-        return activeFilters.distances.some((distance) =>
-          eventDistances.some(
-            (eventDist) =>
-              eventDist.includes(distance) ||
-              (distance === "Marathon" && eventDist.includes("42")) ||
-              (distance === "Half Marathon" && eventDist.includes("21")),
-          ),
-        );
-      });
-    }
-
-    // Apply event type filter
-    if (activeFilters.eventTypes.length > 0) {
-      result = result.filter(
-        (event) =>
-          event.eventType && activeFilters.eventTypes.includes(event.eventType),
-      );
-    }
-
-    // Apply date range filter (simplified for demo)
-    if (activeFilters.dateRange?.from) {
-      // In a real app, you would parse the date strings and compare them properly
-      // This is just a simplified example
-      const fromMonth = activeFilters.dateRange.from.getMonth();
-      result = result.filter((event) => {
-        // Simple check if the event month contains the filter month name
-        const monthNames = [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December",
-        ];
-        return event.date.includes(monthNames[fromMonth]);
-      });
-    }
-
     setFilteredEvents(result);
-  }, [searchTerm, activeFilters, events]);
+  }, [searchTerm, events]);
 
   // Event handlers
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-  };
-
-  const handleFilterClick = () => {
-    setShowFilters(!showFilters);
-  };
-
-  const handleApplyFilters = (filters: FilterOptions) => {
-    setActiveFilters(filters);
   };
 
   const handleEventClick = (eventId: string) => {
@@ -267,9 +170,6 @@ const Home = () => {
       });
     }
   };
-
-  const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
-  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   const handleEditEvent = (eventId: string) => {
     // Find the event to edit
@@ -325,32 +225,6 @@ const Home = () => {
 
       // Atualizar o evento no Supabase
       await EventService.updateEvent(eventToEdit.id, eventData);
-
-      // Create updated event object for local state
-      const updatedEvent: Event = {
-        ...eventToEdit,
-        title: data.title,
-        date: formattedDate,
-        time: data.time,
-        location: data.location,
-        distance: data.distance || "5K",
-        participants: parseInt(data.capacity) || 0,
-        description: data.description,
-        imageUrl: data.imageUrl || eventToEdit.imageUrl,
-        price: data.price ? `${parseFloat(data.price).toFixed(2)}` : "Free",
-        // Update coordinates if we have new ones
-        ...(coordinates && {
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-        }),
-      };
-
-      // Update the event in the local events array
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === updatedEvent.id ? updatedEvent : event,
-        ),
-      );
 
       // Show success toast notification
       toast({
@@ -412,34 +286,6 @@ const Home = () => {
       // Inserir o evento no Supabase
       const result = await EventService.createEvent(eventData);
 
-      // Criar objeto de evento para o estado local
-      const newEvent: Event = {
-        id: result.id,
-        title: data.title,
-        date: formattedDate,
-        time: data.time,
-        location: data.location,
-        distance: data.distance || "5K",
-        participants: 0,
-        description: data.description,
-        organizer: "Your Organization",
-        imageUrl:
-          data.imageUrl ||
-          "https://images.unsplash.com/photo-1486218119243-13883505764c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-        registrationUrl: "https://example.com/register",
-        price: data.price ? `${parseFloat(data.price).toFixed(2)}` : "Free",
-        eventType: "Official Race",
-        // Add coordinates if geocoding was successful
-        ...(coordinates && {
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-        }),
-        capacity: parseInt(data.capacity) || 0,
-      };
-
-      // Add the new event to the events array with animation
-      setEvents((prevEvents) => [newEvent, ...prevEvents]);
-
       // Show success toast notification
       toast({
         title: "Evento Adicionado com Sucesso",
@@ -460,65 +306,16 @@ const Home = () => {
   };
 
   const clearAllFilters = () => {
-    setActiveFilters({
-      dateRange: undefined,
-      distances: [],
-      eventTypes: [],
-      locationRadius: 25,
-      location: "",
-      keyword: "",
-    });
     setSearchTerm("");
   };
 
-  const removeFilter = (type: string, value?: string) => {
-    switch (type) {
-      case "search":
-        setSearchTerm("");
-        break;
-      case "location":
-        setActiveFilters((prev) => ({ ...prev, location: "" }));
-        break;
-      case "dateRange":
-        setActiveFilters((prev) => ({ ...prev, dateRange: undefined }));
-        break;
-      case "distance":
-        if (value) {
-          setActiveFilters((prev) => ({
-            ...prev,
-            distances: prev.distances.filter((d) => d !== value),
-          }));
-        }
-        break;
-      case "eventType":
-        if (value) {
-          setActiveFilters((prev) => ({
-            ...prev,
-            eventTypes: prev.eventTypes.filter((t) => t !== value),
-          }));
-        }
-        break;
-      case "keyword":
-        setActiveFilters((prev) => ({ ...prev, keyword: "" }));
-        break;
-    }
-  };
-
-  // Find selected event
-  const selectedEvent = events.find((event) => event.id === selectedEventId);
-
-  // Check if any filters are active
-  const hasActiveFilters =
-    searchTerm ||
-    activeFilters.location ||
-    activeFilters.dateRange ||
-    activeFilters.distances.length > 0 ||
-    activeFilters.eventTypes.length > 0 ||
-    activeFilters.keyword;
+  // Compute selected event from ID
+  const selectedEvent = selectedEventId
+    ? events.find(event => event.id === selectedEventId)
+    : null;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
       <Header />
 
       <main className="flex-1 flex flex-col items-center px-4 pb-20">
@@ -526,135 +323,10 @@ const Home = () => {
         <div className="w-full max-w-7xl mt-4">
           <SearchBar
             onSearch={handleSearch}
-            onFilterClick={handleFilterClick}
             value={searchTerm}
             onChange={setSearchTerm}
           />
         </div>
-
-        {/* Inline Filters */}
-        {showFilters && (
-          <div className="w-full max-w-7xl">
-            <InlineFilters
-              onApplyFilters={handleApplyFilters}
-              onClose={() => setShowFilters(false)}
-              initialFilters={activeFilters}
-            />
-          </div>
-        )}
-
-        {/* Active Filters Display */}
-        {hasActiveFilters && (
-          <div className="w-full max-w-7xl mt-4 bg-white p-3 rounded-lg shadow-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">
-                Filtros Ativos:
-              </span>
-
-              {searchTerm && (
-                <Badge
-                  variant="secondary"
-                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                >
-                  <span>Busca: "{searchTerm}"</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeFilter("search")}
-                  />
-                </Badge>
-              )}
-
-              {activeFilters.location && (
-                <Badge
-                  variant="secondary"
-                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                >
-                  <span>Localização: {activeFilters.location}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeFilter("location")}
-                  />
-                </Badge>
-              )}
-
-              {activeFilters.dateRange?.from && (
-                <Badge
-                  variant="secondary"
-                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                >
-                  <span>
-                    Data:{" "}
-                    {new Intl.DateTimeFormat("pt-BR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric"
-                    }).format(activeFilters.dateRange.from)}
-                    {activeFilters.dateRange.to &&
-                      ` - ${new Intl.DateTimeFormat("pt-BR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric"
-                      }).format(activeFilters.dateRange.to)}`}
-                  </span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeFilter("dateRange")}
-                  />
-                </Badge>
-              )}
-
-              {activeFilters.distances.map((distance) => (
-                <Badge
-                  key={distance}
-                  variant="secondary"
-                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                >
-                  <span>Distância: {distance}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeFilter("distance", distance)}
-                  />
-                </Badge>
-              ))}
-
-              {activeFilters.eventTypes.map((type) => (
-                <Badge
-                  key={type}
-                  variant="secondary"
-                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                >
-                  <span>Tipo: {type}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeFilter("eventType", type)}
-                  />
-                </Badge>
-              ))}
-
-              {activeFilters.keyword && (
-                <Badge
-                  variant="secondary"
-                  className="bg-blue-100 text-blue-800 flex items-center gap-1"
-                >
-                  <span>Palavra-chave: "{activeFilters.keyword}"</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeFilter("keyword")}
-                  />
-                </Badge>
-              )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className="ml-auto text-blue-600 hover:text-blue-800 hover:bg-blue-50 text-xs"
-              >
-                Limpar Todos
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Event List */}
         <div className="w-full max-w-7xl mt-2 flex-1">
@@ -662,20 +334,6 @@ const Home = () => {
             <EventList
               events={filteredEvents}
               onEventClick={handleEventClick}
-              onMapViewClick={(eventId) => {
-                // Navigate to map view with the selected event
-                navigate(`/map?event=${eventId}`);
-              }}
-              featuredEvents={events
-                .filter(
-                  (event) =>
-                    // For demo purposes, mark some events as featured
-                    event.eventType === "Charity Event" ||
-                    event.title.includes("Marathon") ||
-                    event.id === "1" ||
-                    event.id === "3",
-                )
-                .slice(0, 3)}
             />
           ) : (
             <div className="w-full h-64 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm mt-4">

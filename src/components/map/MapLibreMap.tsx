@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 interface Event {
@@ -23,7 +22,7 @@ interface MapLibreMapProps {
 
 const MapLibreMap = ({
   events = [],
-  onEventClick = () => {},
+  onEventClick = () => { },
 }: MapLibreMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);

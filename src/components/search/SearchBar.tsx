@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface SearchBarProps {
   onSearch?: (searchTerm: string) => void;
-  onFilterClick?: () => void;
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
 }
 
 const SearchBar = ({
-  onSearch = () => {},
-  onFilterClick = () => {},
+  onSearch = () => { },
   placeholder = "Buscar eventos de corrida...",
   value = "",
   onChange,
@@ -56,15 +54,6 @@ const SearchBar = ({
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           Buscar
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onFilterClick}
-          className="border-gray-300 hover:bg-gray-100 flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filtros
         </Button>
       </form>
     </div>
