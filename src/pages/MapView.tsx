@@ -16,6 +16,7 @@ interface Event {
   distance: string;
   participants: number;
   description: string;
+  capacity: number;
   organizer: string;
   imageUrl: string;
   registrationUrl: string;
@@ -52,6 +53,7 @@ const MapView = () => {
         registrationUrl:
           event.registration_url || "https://example.com/register",
         price: event.price,
+        capacity: event.capacity,
         eventType: event.event_type,
         latitude: event.latitude || undefined,
         longitude: event.longitude || undefined,

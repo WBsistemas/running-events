@@ -9,7 +9,94 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          id: string
+          title: string
+          time: string
+          location: string
+          distance: string
+          capacity: number
+          participants: number | null
+          description: string
+          image_url: string
+          registration_url: string | null
+          price: string
+          event_type: string
+          latitude: number | null
+          longitude: number | null
+          created_at: string
+          updated_at: string
+          date: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          time: string
+          location: string
+          distance: string
+          capacity: number
+          participants?: number | null
+          description: string
+          image_url: string
+          registration_url?: string | null
+          price: string
+          event_type: string
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+          updated_at?: string
+          date?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          time?: string
+          location?: string
+          distance?: string
+          capacity?: number
+          participants?: number | null
+          description?: string
+          image_url?: string
+          registration_url?: string | null
+          price?: string
+          event_type?: string
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+          updated_at?: string
+          date?: string | null
+        }
+      }
+      users: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          role: string
+          phone: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          name?: string | null
+          role?: string
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          role?: string
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

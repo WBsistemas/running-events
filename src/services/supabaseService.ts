@@ -2,9 +2,15 @@ import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/supabase";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
-type Organizer = Database["public"]["Tables"]["organizers"]["Row"];
-type Registration = Database["public"]["Tables"]["registrations"]["Row"];
 type User = Database["public"]["Tables"]["users"]["Row"];
+
+// Função de utilidade para formatar datas
+function formatDateToBrazilian(dateString: string | null): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('pt-BR');
+}
 
 // Serviço para gerenciar eventos
 export const EventService = {
@@ -16,7 +22,14 @@ export const EventService = {
       .order("date", { ascending: true });
 
     if (error) throw error;
-    return data || [];
+
+    // Formatar datas para o padrão brasileiro
+    const formattedEvents = data?.map(event => ({
+      ...event,
+      date: formatDateToBrazilian(event.date)
+    })) || [];
+
+    return formattedEvents;
   },
 
   // Obter eventos filtrados
@@ -44,14 +57,21 @@ export const EventService = {
     const { data, error } = await query;
 
     if (error) throw error;
-    return data || [];
+
+    // Formatar datas para o padrão brasileiro
+    const formattedEvents = data?.map(event => ({
+      ...event,
+      date: formatDateToBrazilian(event.date)
+    })) || [];
+
+    return formattedEvents;
   },
 
   // Obter um evento por ID
   async getEventById(id: string): Promise<Event | null> {
     const { data, error } = await supabase
       .from("events")
-      .select("*, organizers(name, logo_url)")
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -59,6 +79,15 @@ export const EventService = {
       if (error.code === "PGRST116") return null; // Não encontrado
       throw error;
     }
+
+    // Formatar data para o padrão brasileiro
+    if (data) {
+      return {
+        ...data,
+        date: formatDateToBrazilian(data.date)
+      };
+    }
+
     return data;
   },
 
@@ -66,6 +95,7 @@ export const EventService = {
   async createEvent(
     eventData: Omit<Event, "id" | "created_at" | "updated_at">,
   ): Promise<Event> {
+
     const { data, error } = await supabase
       .from("events")
       .insert(eventData)
@@ -73,11 +103,13 @@ export const EventService = {
       .single();
 
     if (error) throw error;
+
     return data;
   },
 
   // Atualizar um evento existente
   async updateEvent(id: string, eventData: Partial<Event>): Promise<Event> {
+
     const { data, error } = await supabase
       .from("events")
       .update({
@@ -97,95 +129,7 @@ export const EventService = {
     const { error } = await supabase.from("events").delete().eq("id", id);
 
     if (error) throw error;
-  },
-};
-
-// Serviço para gerenciar organizadores
-export const OrganizerService = {
-  // Obter todos os organizadores
-  async getAllOrganizers(): Promise<Organizer[]> {
-    const { data, error } = await supabase.from("organizers").select("*");
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  // Obter um organizador por ID
-  async getOrganizerById(id: string): Promise<Organizer | null> {
-    const { data, error } = await supabase
-      .from("organizers")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      if (error.code === "PGRST116") return null; // Não encontrado
-      throw error;
-    }
-    return data;
-  },
-
-  // Criar um novo organizador
-  async createOrganizer(
-    organizerData: Omit<Organizer, "id" | "created_at">,
-  ): Promise<Organizer> {
-    const { data, error } = await supabase
-      .from("organizers")
-      .insert(organizerData)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-};
-
-// Serviço para gerenciar inscrições
-export const RegistrationService = {
-  // Inscrever um usuário em um evento
-  async registerForEvent(
-    eventId: string,
-    userId: string,
-    amount: number,
-  ): Promise<Registration> {
-    const { data, error } = await supabase
-      .from("registrations")
-      .insert({
-        event_id: eventId,
-        user_id: userId,
-        amount_paid: amount,
-        status: "confirmed",
-        payment_status: amount > 0 ? "paid" : "free",
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Obter inscrições de um usuário
-  async getUserRegistrations(
-    userId: string,
-  ): Promise<(Registration & { event: Event })[]> {
-    const { data, error } = await supabase
-      .from("registrations")
-      .select("*, event:events(*)")
-      .eq("user_id", userId);
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  // Cancelar uma inscrição
-  async cancelRegistration(registrationId: string): Promise<void> {
-    const { error } = await supabase
-      .from("registrations")
-      .update({ status: "cancelled" })
-      .eq("id", registrationId);
-
-    if (error) throw error;
-  },
+  }
 };
 
 // Serviço para gerenciar usuários
