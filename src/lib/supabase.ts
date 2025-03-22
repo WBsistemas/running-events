@@ -64,31 +64,3 @@ export async function deleteEvent(id: string) {
   return true;
 }
 
-// Organizadores
-export async function getOrganizers() {
-  const { data, error } = await supabase.from("organizers").select("*");
-
-  if (error) throw error;
-  return data;
-}
-
-// Inscrições
-export async function registerForEvent(registrationData: any) {
-  const { data, error } = await supabase
-    .from("registrations")
-    .insert(registrationData)
-    .select();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getUserRegistrations(userId: string) {
-  const { data, error } = await supabase
-    .from("registrations")
-    .select("*, events(*)")
-    .eq("user_id", userId);
-
-  if (error) throw error;
-  return data;
-}

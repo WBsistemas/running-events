@@ -62,7 +62,7 @@ interface Event {
 
 const EditEventDialog = ({
   open = true,
-  onOpenChange = () => {},
+  onOpenChange = () => { },
   onSubmit = (data) => console.log("Form submitted:", data),
   event,
 }: EditEventDialogProps) => {

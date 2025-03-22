@@ -53,22 +53,17 @@ const Home = () => {
       setLoading(true);
       console.log("Buscando eventos do Supabase...");
 
-      const { data, error } = await supabase
-        .from("events")
-        .select("*");
-
-      if (error) {
-        throw error;
-      }
+      // Substituir chamada direta por serviço
+      const data = await EventService.getAllEvents();
 
       console.log("Eventos recebidos:", data);
 
       if (data && data.length > 0) {
-        // Mapear os eventos do Supabase para o formato esperado pelo componente
+        // Mapear os eventos - observe que não precisamos mais formatar a data aqui
         const mappedEvents = data.map((event: any) => ({
           id: event.id,
           title: event.title,
-          date: event.date,
+          date: event.date, // Já vem formatado do serviço
           time: event.time,
           location: event.location,
           distance: event.distance,
@@ -197,12 +192,9 @@ const Home = () => {
         coordinates = await geocodeAddress(data.location);
       }
 
-      // Formatar a data para o formato esperado pelo Supabase
-      const formattedDate = new Date(data.date).toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
+      // Use ISO format for date to avoid timestamp parsing issues
+      // A data deve ser enviada como um objeto Date para o Supabase
+      const formattedDate = data.date ? data.date : null;
 
       // Criar objeto de evento para atualização no Supabase
       const eventData = {
@@ -239,7 +231,7 @@ const Home = () => {
       console.error("Erro ao atualizar evento:", error);
       toast({
         title: "Erro ao atualizar evento",
-        description: "Ocorreu um erro ao tentar atualizar o evento.",
+        description: `Ocorreu um erro ao tentar atualizar o evento: ${(error as any).message || error}`,
         variant: "destructive",
       });
     }
@@ -253,17 +245,12 @@ const Home = () => {
       // Geocode the location to get coordinates
       const coordinates = await geocodeAddress(data.location);
 
-      // Formatar a data para o formato esperado pelo Supabase
-      const formattedDate = new Date(data.date).toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
-
+      // Use ISO format for date to avoid timestamp parsing issues
+      // A data deve ser enviada como um objeto Date para o Supabas
       // Criar objeto de evento para inserção no Supabase
       const eventData = {
         title: data.title,
-        date: formattedDate,
+        date: data.date,
         time: data.time,
         location: data.location,
         distance: data.distance || "5K",
@@ -299,7 +286,7 @@ const Home = () => {
       console.error("Erro ao adicionar evento:", error);
       toast({
         title: "Erro ao adicionar evento",
-        description: "Ocorreu um erro ao tentar adicionar o evento.",
+        description: `Ocorreu um erro ao tentar adicionar o evento: ${(error as any).message || error}`,
         variant: "destructive",
       });
     }

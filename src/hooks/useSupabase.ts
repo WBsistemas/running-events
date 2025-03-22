@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   EventService,
-  OrganizerService,
-  RegistrationService,
   UserService,
 } from "@/services/supabaseService";
 import type { Database } from "@/types/supabase";
@@ -168,80 +166,5 @@ export function useEvents() {
     createEvent,
     updateEvent,
     deleteEvent,
-  };
-}
-
-// Hook para gerenciar inscrições
-export function useRegistrations() {
-  const [registrations, setRegistrations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { user } = useAuth();
-
-  const fetchUserRegistrations = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const data = await RegistrationService.getUserRegistrations(user.id);
-      setRegistrations(data);
-      setError(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Erro ao buscar inscrições"),
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchUserRegistrations();
-    }
-  }, [user]);
-
-  const registerForEvent = async (eventId: string, amount: number) => {
-    if (!user) throw new Error("Usuário não autenticado");
-
-    try {
-      const registration = await RegistrationService.registerForEvent(
-        eventId,
-        user.id,
-        amount,
-      );
-      setRegistrations((prev) => [...prev, registration]);
-      return registration;
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Erro ao registrar para evento"),
-      );
-      throw err;
-    }
-  };
-
-  const cancelRegistration = async (registrationId: string) => {
-    try {
-      await RegistrationService.cancelRegistration(registrationId);
-      setRegistrations((prev) =>
-        prev.map((reg) =>
-          reg.id === registrationId ? { ...reg, status: "cancelled" } : reg,
-        ),
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Erro ao cancelar inscrição"),
-      );
-      throw err;
-    }
-  };
-
-  return {
-    registrations,
-    loading,
-    error,
-    fetchUserRegistrations,
-    registerForEvent,
-    cancelRegistration,
   };
 }

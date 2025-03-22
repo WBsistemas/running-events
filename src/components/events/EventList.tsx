@@ -59,31 +59,20 @@ const EventList = ({
   // Format date to show month and day more visibly
   const formatDate = (dateString: string) => {
     try {
-      // Verifica se a data já está no formato brasileiro (ex: "5 de abril de 2025")
-      if (dateString.includes(" de ")) {
-        const parts = dateString.split(" de ");
-        const day = parseInt(parts[0]);
-        let month = parts[1].split(" ")[0].substring(0, 3).toUpperCase();
-        return { month, day };
+      // Se a data for nula ou indefinida
+      if (!dateString) {
+        return { month: "???", day: "--" };
       }
 
-      // Tenta converter a string para um objeto Date
-      const date = new Date(dateString);
-      const month = date
-        .toLocaleString("pt-BR", { month: "short" })
-        .toUpperCase();
-      const day = date.getDate();
-      return { month, day };
+      // Processar formato DD/MM/YYYY (formato garantido pelo supabaseService)
+      const [day, month, year] = dateString.split('/').map(part => parseInt(part));
+      const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+      return { month: monthNames[month - 1], day };
     } catch (e) {
-      // Fallback para erros de parsing
-      const parts = dateString.split(" ");
-      return {
-        month: parts[0].substring(0, 3).toUpperCase(),
-        day: parseInt(parts[1]) || 1,
-      };
+      console.error("Erro ao formatar data:", e, dateString);
+      return { month: "???", day: "--" };
     }
   };
-
 
   // Group events by day for calendar view
   const eventsByDay = useMemo(() => {
@@ -91,39 +80,13 @@ const EventList = ({
 
     events.forEach((event) => {
       try {
-        let dayKey: string;
+        // Se a data for nula ou inválida, pule este evento
+        if (!event.date) return;
 
-        // Verifica se a data está no formato brasileiro (ex: "5 de abril de 2025")
-        if (typeof event.date === 'string' && event.date.includes(" de ")) {
-          const parts = event.date.split(" de ");
-          const day = parseInt(parts[0]);
-          const month = parts[1].split(" ")[0].toLowerCase();
-
-          // Extrai o ano ou usa o ano atual
-          let yearStr = "";
-          if (parts[1].includes(" ")) {
-            const lastPart = parts[1].split(" ");
-            yearStr = lastPart[lastPart.length - 1];
-          } else {
-            yearStr = new Date().getFullYear().toString();
-          }
-          const year = parseInt(yearStr);
-
-          // Mapeia nomes de meses em português para números
-          const monthMap: Record<string, number> = {
-            'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3,
-            'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7,
-            'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
-          };
-
-          // Cria uma data com os componentes extraídos
-          const date = new Date(year, monthMap[month] || 0, day);
-          dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-        } else {
-          // Formato de data padrão
-          const date = new Date(event.date);
-          dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-        }
+        // Processar formato DD/MM/YYYY (formato garantido pelo supabaseService)
+        const [day, month, year] = event.date.split('/').map(part => parseInt(part));
+        // Formato YYYY-MM-DD para a chave
+        const dayKey = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
         if (!days[dayKey]) {
           days[dayKey] = [];
