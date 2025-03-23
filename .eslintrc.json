@@ -1,0 +1,54 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  },
+  "env": {
+    "browser": true,
+    "amd": true,
+    "node": true
+  },
+  "extends": [
+    "standard",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "plugins": ["react", "react-hooks", "@typescript-eslint"],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react/jsx-handler-names": "off",
+    "react/jsx-no-bind": "off",
+    "react/jsx-key": "warn",
+    "react/no-unknown-property": "warn",
+    "react/no-unescaped-entities": "warn",
+    "react-hooks/rules-of-hooks": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-use-before-define": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "no-console": "warn",
+    "no-undef": "warn",
+    "no-use-before-define": "warn",
+    "import/no-duplicates": "warn",
+    "no-lone-blocks": "warn",
+    "no-unused-expressions": "warn"
+  }
+} 

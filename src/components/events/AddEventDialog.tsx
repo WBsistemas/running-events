@@ -1,182 +1,169 @@
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form'
 import {
   Calendar,
   MapPin,
   Clock,
   Trophy,
   Users,
-  Info,
-} from "lucide-react";
-
+  Info
+} from 'lucide-react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DialogFooter
+} from '@/components/ui/dialog'
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import MultiSelect from "./MultiSelect";
-
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import MultiSelect from './MultiSelect'
 interface AddEventDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onSubmit?: (data: EventFormData) => void;
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  onSubmit?: (data: EventFormData) => void
 }
-
 interface EventFormData {
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  distance: string;
-  capacity: string;
-  description: string;
-  imageUrl: string;
-  price: string;
+  title: string
+  date: string
+  time: string
+  location: string
+  distance: string
+  capacity: string
+  description: string
+  imageUrl: string
+  price: string
 }
-
 const AddEventDialog = ({
   open = true,
   onOpenChange = () => {},
-  onSubmit = (data) => console.log("Form submitted:", data),
+  onSubmit = (data) => console.log('Form submitted:', data)
 }: AddEventDialogProps) => {
   const form = useForm<EventFormData>({
     defaultValues: {
-      title: "",
-      date: "",
-      time: "",
-      location: "",
-      distance: "",
-      capacity: "",
-      description: "",
-      imageUrl: "",
-      price: "",
-    },
-  });
-
-  const handleSubmit = (data: EventFormData) => {
-    onSubmit(data);
-    onOpenChange(false);
-  };
-
+      title: '',
+      date: '',
+      time: '',
+      location: '',
+      distance: '',
+      capacity: '',
+      description: '',
+      imageUrl: '',
+      price: ''
+    }
+  })
+  function handleSubmit (data: EventFormData) {
+    onSubmit(data)
+    onOpenChange(false)
+  }
   const distanceOptions = [
-    { value: "5K", label: "5K" },
-    { value: "10K", label: "10K" },
-    { value: "15K", label: "15K" },
-    { value: "21K", label: "Meia Maratona (21K)" },
-    { value: "42K", label: "Maratona (42K)" },
-    { value: "Ultra", label: "Ultra Maratona" },
-  ];
-
+    { value: '5K', label: '5K' },
+    { value: '10K', label: '10K' },
+    { value: '15K', label: '15K' },
+    { value: '21K', label: 'Meia Maratona (21K)' },
+    { value: '42K', label: 'Maratona (42K)' },
+    { value: 'Ultra', label: 'Ultra Maratona' }]
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-white">
+      <DialogContent className='sm:max-w-[600px] bg-white'>
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-blue-800">
+          <DialogTitle className='text-xl font-bold text-blue-800'>
             Adicionar Novo Evento de Corrida
           </DialogTitle>
         </DialogHeader>
-
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            className='space-y-4'
           >
             <FormField
               control={form.control}
-              name="title"
+              name='title'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Título do Evento</FormLabel>
                   <FormControl>
-                    <Input placeholder="Marathon 2023" {...field} />
+                    <Input placeholder='Marathon 2023' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <FormField
                 control={form.control}
-                name="date"
+                name='date'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      <span className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-green-600" />
+                      <span className='flex items-center gap-2'>
+                        <Calendar className='h-4 w-4 text-green-600' />
                         Data
                       </span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type='date' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name="time"
+                name='time'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      <span className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-green-600" />
+                      <span className='flex items-center gap-2'>
+                        <Clock className='h-4 w-4 text-green-600' />
                         Hora de Início
                       </span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} />
+                      <Input type='time' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
-              name="location"
+              name='location'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <span className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-green-600" />
+                    <span className='flex items-center gap-2'>
+                      <MapPin className='h-4 w-4 text-green-600' />
                       Localização
                     </span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Central Park, New York" {...field} />
+                    <Input placeholder='Central Park, New York' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <FormField
                 control={form.control}
-                name="distance"
+                name='distance'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      <span className="flex items-center gap-2">
-                        <Trophy className="h-4 w-4 text-green-600" />
+                      <span className='flex items-center gap-2'>
+                        <Trophy className='h-4 w-4 text-green-600' />
                         Distâncias
                       </span>
                     </FormLabel>
@@ -185,29 +172,28 @@ const AddEventDialog = ({
                         options={distanceOptions}
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Selecione as distâncias"
+                        placeholder='Selecione as distâncias'
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name="capacity"
+                name='capacity'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      <span className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-green-600" />
+                      <span className='flex items-center gap-2'>
+                        <Users className='h-4 w-4 text-green-600' />
                         Capacidade
                       </span>
                     </FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        placeholder="Máximo de participantes"
+                        type='number'
+                        placeholder='Máximo de participantes'
                         {...field}
                       />
                     </FormControl>
@@ -216,22 +202,21 @@ const AddEventDialog = ({
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
-              name="description"
+              name='description'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <span className="flex items-center gap-2">
-                      <Info className="h-4 w-4 text-green-600" />
+                    <span className='flex items-center gap-2'>
+                      <Info className='h-4 w-4 text-green-600' />
                       Descrição
                     </span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Forneça detalhes sobre o evento"
-                      className="min-h-[100px]"
+                      placeholder='Forneça detalhes sobre o evento'
+                      className='min-h-[100px]'
                       {...field}
                     />
                   </FormControl>
@@ -239,46 +224,45 @@ const AddEventDialog = ({
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <FormField
                 control={form.control}
-                name="imageUrl"
+                name='imageUrl'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Imagem do Evento</FormLabel>
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className='grid gap-2'>
+                      <div className='flex items-center gap-2'>
                         <Input
-                          type="file"
-                          accept="image/*"
+                          type='file'
+                          accept='image/*'
                           onChange={(e) => {
-                            const file = e.target.files?.[0];
+                            const file = e.target.files?.[0]
                             if (file) {
-                              const reader = new FileReader();
+                              const reader = new FileReader()
                               reader.onload = (event) => {
-                                field.onChange(event.target?.result);
-                              };
-                              reader.readAsDataURL(file);
+                                field.onChange(event.target?.result)
+                              }
+                              reader.readAsDataURL(file)
                             }
                           }}
-                          className="flex-1"
+                          className='flex-1'
                         />
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className='text-xs text-gray-500'>
                         Ou insira uma URL da imagem:
                       </div>
                       <Input
-                        placeholder="https://example.com/image.jpg"
-                        value={field.value || ""}
+                        placeholder='https://example.com/image.jpg'
+                        value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value)}
                       />
-                      {field.value && field.value.startsWith("data:image") && (
-                        <div className="mt-2 border rounded-md p-2">
+                      {field.value && field.value.startsWith('data:image') && (
+                        <div className='mt-2 border rounded-md p-2'>
                           <img
                             src={field.value}
-                            alt="Preview"
-                            className="max-h-32 mx-auto object-contain"
+                            alt='Preview'
+                            className='max-h-32 mx-auto object-contain'
                           />
                         </div>
                       )}
@@ -287,60 +271,59 @@ const AddEventDialog = ({
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name="price"
+                name='price'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      <span className="flex items-center gap-2">
+                      <span className='flex items-center gap-2'>
                         <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4 text-green-600"
+                          xmlns='http://www.w3.org/2000/svg'
+                          width='16'
+                          height='16'
+                          viewBox='0 0 24 24'
+                          fill='none'
+                          stroke='currentColor'
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          className='h-4 w-4 text-green-600'
                         >
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
-                          <path d="M12 18V6" />
+                          <circle cx='12' cy='12' r='10' />
+                          <path d='M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8' />
+                          <path d='M12 18V6' />
                         </svg>
                         Preço
                       </span>
                     </FormLabel>
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-medium">R$</span>
+                    <div className='grid gap-2'>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-lg font-medium'>R$</span>
                         <FormControl>
                           <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0,00"
+                            type='number'
+                            min='0'
+                            step='0.01'
+                            placeholder='0,00'
                             {...field}
-                            className="flex-1"
+                            className='flex-1'
                           />
                         </FormControl>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className='flex items-center gap-2'>
                         <Checkbox
-                          id="free-event"
-                          checked={field.value === "0"}
+                          id='free-event'
+                          checked={field.value === '0'}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              field.onChange("0");
+                              field.onChange('0')
                             }
                           }}
                         />
                         <Label
-                          htmlFor="free-event"
-                          className="text-sm cursor-pointer"
+                          htmlFor='free-event'
+                          className='text-sm cursor-pointer'
                         >
                           Evento gratuito
                         </Label>
@@ -351,18 +334,17 @@ const AddEventDialog = ({
                 )}
               />
             </div>
-
-            <DialogFooter className="pt-4">
+            <DialogFooter className='pt-4'>
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={() => onOpenChange(false)}
               >
                 Cancelar
               </Button>
               <Button
-                type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white"
+                type='submit'
+                className='bg-blue-700 hover:bg-blue-800 text-white'
               >
                 Adicionar Evento
               </Button>
@@ -371,7 +353,6 @@ const AddEventDialog = ({
         </Form>
       </DialogContent>
     </Dialog>
-  );
-};
-
-export default AddEventDialog;
+  )
+}
+export default AddEventDialog
