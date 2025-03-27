@@ -8,6 +8,7 @@ import type { Database } from "@/types/supabase";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type User = Database["public"]["Tables"]["users"]["Row"];
+type EventFilters = Record<string, any>;
 
 // Hook para gerenciar autenticação
 export function useAuth() {
@@ -48,7 +49,7 @@ export function useAuth() {
   }, []);
 
   // Funções de autenticação
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -56,7 +57,7 @@ export function useAuth() {
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string): Promise<void> => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -67,7 +68,7 @@ export function useAuth() {
     if (error) throw error;
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
@@ -87,7 +88,7 @@ export function useEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchEvents = async (filters?: any) => {
+  const fetchEvents = async (filters?: EventFilters): Promise<void> => {
     setLoading(true);
     try {
       const data = filters
@@ -110,7 +111,9 @@ export function useEvents() {
     fetchEvents();
   }, []);
 
-  const getEventById = async (id: string) => {
+  const getEventById = async (id: string): Promise<Event | null> => {
+    if (!id) return null;
+    
     try {
       return await EventService.getEventById(id);
     } catch (err) {
@@ -119,9 +122,11 @@ export function useEvents() {
     }
   };
 
-  const createEvent = async (eventData: any) => {
+  const createEvent = async (eventData: Partial<Event>): Promise<Event | null> => {
+    if (!eventData) return null;
+    
     try {
-      const newEvent = await EventService.createEvent(eventData);
+      const newEvent = await EventService.createEvent(eventData as any);
       setEvents((prev) => [newEvent, ...prev]);
       return newEvent;
     } catch (err) {
@@ -130,7 +135,9 @@ export function useEvents() {
     }
   };
 
-  const updateEvent = async (id: string, eventData: any) => {
+  const updateEvent = async (id: string, eventData: Partial<Event>): Promise<Event | null> => {
+    if (!id || !eventData) return null;
+    
     try {
       const updatedEvent = await EventService.updateEvent(id, eventData);
       setEvents((prev) =>
@@ -145,10 +152,13 @@ export function useEvents() {
     }
   };
 
-  const deleteEvent = async (id: string) => {
+  const deleteEvent = async (id: string): Promise<boolean> => {
+    if (!id) return false;
+    
     try {
       await EventService.deleteEvent(id);
       setEvents((prev) => prev.filter((event) => event.id !== id));
+      return true;
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Erro ao excluir evento"),

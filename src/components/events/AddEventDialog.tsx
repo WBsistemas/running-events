@@ -50,7 +50,7 @@ interface EventFormData {
 
 const AddEventDialog = ({
   open = true,
-  onOpenChange = () => {},
+  onOpenChange = () => { },
   onSubmit = (data) => console.log("Form submitted:", data),
 }: AddEventDialogProps) => {
   const form = useForm<EventFormData>({
@@ -69,6 +69,29 @@ const AddEventDialog = ({
 
   const handleSubmit = (data: EventFormData) => {
     onSubmit(data);
+    onOpenChange(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        onChange(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFreeEventChange = (checked: boolean | "indeterminate", onChange: (value: string) => void) => {
+    if (checked) {
+      onChange("0");
+    }
+  };
+
+  const handleCancel = () => {
     onOpenChange(false);
   };
 
@@ -102,7 +125,7 @@ const AddEventDialog = ({
                 <FormItem>
                   <FormLabel>Título do Evento</FormLabel>
                   <FormControl>
-                    <Input placeholder="Marathon 2023" {...field} />
+                    <Input placeholder={`Maratona São Paulo ${new Date().getFullYear()}`} {...field} aria-label="Título do evento" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,7 +145,7 @@ const AddEventDialog = ({
                       </span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} aria-label="Data do evento" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -141,7 +164,7 @@ const AddEventDialog = ({
                       </span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} />
+                      <Input type="time" {...field} aria-label="Hora de início do evento" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,7 +184,7 @@ const AddEventDialog = ({
                     </span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Central Park, New York" {...field} />
+                    <Input placeholder="Central Park, New York" {...field} aria-label="Localização do evento" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -209,6 +232,7 @@ const AddEventDialog = ({
                         type="number"
                         placeholder="Máximo de participantes"
                         {...field}
+                        aria-label="Capacidade do evento"
                       />
                     </FormControl>
                     <FormMessage />
@@ -233,6 +257,7 @@ const AddEventDialog = ({
                       placeholder="Forneça detalhes sobre o evento"
                       className="min-h-[100px]"
                       {...field}
+                      aria-label="Descrição do evento"
                     />
                   </FormControl>
                   <FormMessage />
@@ -252,17 +277,9 @@ const AddEventDialog = ({
                         <Input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                field.onChange(event.target?.result);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
+                          onChange={(e) => handleFileChange(e, field.onChange)}
                           className="flex-1"
+                          aria-label="Upload de imagem do evento"
                         />
                       </div>
                       <div className="text-xs text-gray-500">
@@ -272,6 +289,7 @@ const AddEventDialog = ({
                         placeholder="https://example.com/image.jpg"
                         value={field.value || ""}
                         onChange={(e) => field.onChange(e.target.value)}
+                        aria-label="URL da imagem do evento"
                       />
                       {field.value && field.value.startsWith("data:image") && (
                         <div className="mt-2 border rounded-md p-2">
@@ -325,6 +343,7 @@ const AddEventDialog = ({
                             placeholder="0,00"
                             {...field}
                             className="flex-1"
+                            aria-label="Preço do evento"
                           />
                         </FormControl>
                       </div>
@@ -332,11 +351,8 @@ const AddEventDialog = ({
                         <Checkbox
                           id="free-event"
                           checked={field.value === "0"}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              field.onChange("0");
-                            }
-                          }}
+                          onCheckedChange={(checked) => handleFreeEventChange(checked, field.onChange)}
+                          aria-label="Evento gratuito"
                         />
                         <Label
                           htmlFor="free-event"
@@ -356,13 +372,15 @@ const AddEventDialog = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
+                aria-label="Cancelar adição de evento"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 className="bg-blue-700 hover:bg-blue-800 text-white"
+                aria-label="Adicionar evento"
               >
                 Adicionar Evento
               </Button>

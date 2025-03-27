@@ -58,6 +58,37 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
   event,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleCloseDialog = () => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+  };
+
+  const handleEditClick = () => {
+    if (onEdit && event) {
+      onEdit(event.id);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onDelete && event) {
+      console.log("Deleting event from dialog:", event.id);
+      onDelete(event.id);
+    }
+    // Dialog will be closed by the delete handler
+  };
+
+  const handleRegisterClick = () => {
+    if (event?.registrationUrl) {
+      window.open(event.registrationUrl, "_blank");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -123,32 +154,33 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
             <Button
               variant="outline"
               className="w-full sm:w-auto"
-              onClick={() => onOpenChange && onOpenChange(false)}
+              onClick={handleCloseDialog}
+              aria-label="Fechar detalhes do evento"
             >
               Fechar
             </Button>
             <Button
               variant="destructive"
               className="w-full sm:w-auto"
-              onClick={() => {
-                setDeleteDialogOpen(true);
-              }}
+              onClick={handleDeleteClick}
+              aria-label="Excluir evento"
             >
               Excluir Evento
             </Button>
             <Button
               variant="outline"
               className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
-              onClick={() => {
-                if (onEdit && event) onEdit(event.id);
-              }}
+              onClick={handleEditClick}
+              aria-label="Editar evento"
             >
               Editar Evento
             </Button>
           </div>
           <Button
             className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white"
-            onClick={() => event?.registrationUrl && window.open(event.registrationUrl, "_blank")}
+            onClick={handleRegisterClick}
+            aria-label="Inscrever-se no evento"
+            disabled={!event?.registrationUrl}
           >
             Inscrever-se Agora
             <ExternalLink className="ml-2 h-4 w-4" />
@@ -167,16 +199,11 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel aria-label="Cancelar exclusão">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => {
-                if (onDelete && event) {
-                  console.log("Deleting event from dialog:", event.id);
-                  onDelete(event.id);
-                }
-                // Dialog will be closed by the delete handler
-              }}
+              onClick={handleConfirmDelete}
+              aria-label="Confirmar exclusão do evento"
             >
               Excluir
             </AlertDialogAction>

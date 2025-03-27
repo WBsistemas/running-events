@@ -58,13 +58,12 @@ const EventList = ({
 
   // Format date to show month and day more visibly
   const formatDate = (dateString: string) => {
-    try {
-      // Se a data for nula ou indefinida
-      if (!dateString) {
-        return { month: "???", day: "--" };
-      }
+    if (!dateString) {
+      return { month: "???", day: "--" };
+    }
 
-      // Processar formato DD/MM/YYYY (formato garantido pelo supabaseService)
+    try {
+      // Process DD/MM/YYYY format (guaranteed by supabaseService)
       const [day, month, year] = dateString.split('/').map(part => parseInt(part));
       const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
       return { month: monthNames[month - 1], day };
@@ -79,13 +78,12 @@ const EventList = ({
     const days: Record<string, Event[]> = {};
 
     events.forEach((event) => {
-      try {
-        // Se a data for nula ou inválida, pule este evento
-        if (!event.date) return;
+      if (!event.date) return;
 
-        // Processar formato DD/MM/YYYY (formato garantido pelo supabaseService)
+      try {
+        // Process DD/MM/YYYY format (guaranteed by supabaseService)
         const [day, month, year] = event.date.split('/').map(part => parseInt(part));
-        // Formato YYYY-MM-DD para a chave
+        // Format YYYY-MM-DD for key
         const dayKey = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
         if (!days[dayKey]) {
@@ -139,7 +137,7 @@ const EventList = ({
   }, [currentMonth, eventsByDay]);
 
   // Navigate to previous month
-  const prevMonth = () => {
+  const handlePrevMonth = () => {
     setCurrentMonth((prev) => {
       const newMonth = new Date(prev);
       newMonth.setMonth(newMonth.getMonth() - 1);
@@ -148,7 +146,7 @@ const EventList = ({
   };
 
   // Navigate to next month
-  const nextMonth = () => {
+  const handleNextMonth = () => {
     setCurrentMonth((prev) => {
       const newMonth = new Date(prev);
       newMonth.setMonth(newMonth.getMonth() + 1);
@@ -168,15 +166,24 @@ const EventList = ({
     );
   };
 
-  // Render featured events carousel - Removed as requested
-  const renderFeaturedEvents = () => {
-    return null;
+  const handleEventItemClick = (eventId: string) => {
+    onEventClick(eventId);
+  };
+
+  const handleMapButtonClick = (e: React.MouseEvent, eventId: string) => {
+    e.stopPropagation();
+    onMapViewClick(eventId);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, eventId: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onEventClick(eventId);
+    }
   };
 
   return (
     <div className="w-full h-full bg-gray-50 p-4">
-      {/* Featured Events */}
-      {renderFeaturedEvents()}
 
       {/* View Mode Selector */}
       <Tabs
@@ -224,7 +231,11 @@ const EventList = ({
                 >
                   <div
                     className="w-full max-w-[350px] overflow-hidden rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 bg-white cursor-pointer group"
-                    onClick={() => onEventClick(event.id)}
+                    onClick={() => handleEventItemClick(event.id)}
+                    onKeyDown={(e) => handleKeyDown(e, event.id)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Ver detalhes de ${event.title}`}
                   >
                     <div className="relative h-40 w-full overflow-hidden">
                       <img
@@ -300,7 +311,7 @@ const EventList = ({
                           className="text-blue-700 border-blue-700 hover:bg-blue-50"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEventClick(event.id);
+                            handleEventItemClick(event.id);
                           }}
                         >
                           Ver Detalhes
@@ -314,10 +325,8 @@ const EventList = ({
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 text-gray-500 hover:text-blue-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onMapViewClick(event.id);
-                                  }}
+                                  onClick={(e) => handleMapButtonClick(e, event.id)}
+                                  aria-label="Ver no mapa"
                                 >
                                   <MapPin className="h-4 w-4" />
                                 </Button>
@@ -343,7 +352,11 @@ const EventList = ({
                 <div
                   key={event.id}
                   className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group"
-                  onClick={() => onEventClick(event.id)}
+                  onClick={() => handleEventItemClick(event.id)}
+                  onKeyDown={(e) => handleKeyDown(e, event.id)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Ver detalhes de ${event.title}`}
                 >
                   <div className="flex p-3">
                     <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-md overflow-hidden">
@@ -423,7 +436,7 @@ const EventList = ({
                           className="text-blue-700 border-blue-700 hover:bg-blue-50"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEventClick(event.id);
+                            handleEventItemClick(event.id);
                           }}
                         >
                           Ver Detalhes
@@ -434,10 +447,8 @@ const EventList = ({
                             size="sm"
                             variant="outline"
                             className="text-blue-700 border-blue-700 hover:bg-blue-50 flex items-center gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onMapViewClick(event.id);
-                            }}
+                            onClick={(e) => handleMapButtonClick(e, event.id)}
+                            aria-label="Ver no mapa"
                           >
                             <MapPin className="h-4 w-4" />
                             <span className="hidden sm:inline">
@@ -458,7 +469,7 @@ const EventList = ({
             <div className="bg-white rounded-lg shadow-sm overflow-hidden pb-6">
               {/* Calendar Header */}
               <div className="flex justify-between items-center p-4 bg-blue-50 border-b">
-                <Button variant="ghost" size="sm" onClick={prevMonth}>
+                <Button variant="ghost" size="sm" onClick={handlePrevMonth} aria-label="Mês Anterior">
                   &lt; Mês Anterior
                 </Button>
 
@@ -469,7 +480,7 @@ const EventList = ({
                   })}
                 </h3>
 
-                <Button variant="ghost" size="sm" onClick={nextMonth}>
+                <Button variant="ghost" size="sm" onClick={handleNextMonth} aria-label="Próximo Mês">
                   Próximo Mês &gt;
                 </Button>
               </div>
@@ -521,7 +532,11 @@ const EventList = ({
                                 <div
                                   key={event.id}
                                   className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate hover:bg-blue-200"
-                                  onClick={() => onEventClick(event.id)}
+                                  onClick={() => handleEventItemClick(event.id)}
+                                  onKeyDown={(e) => handleKeyDown(e, event.id)}
+                                  tabIndex={0}
+                                  role="button"
+                                  aria-label={`Ver detalhes de ${event.title}`}
                                 >
                                   {event.title}
                                 </div>

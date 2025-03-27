@@ -37,29 +37,29 @@ const MapView = () => {
 
   // Carregar eventos do Supabase quando o componente montar
   useEffect(() => {
-    if (supabaseEvents.length > 0) {
-      // Mapear os eventos do Supabase para o formato esperado pelo componente
-      const mappedEvents = supabaseEvents.map((event) => ({
-        id: event.id,
-        title: event.title,
-        date: event.date,
-        time: event.time,
-        location: event.location,
-        distance: event.distance,
-        participants: event.participants,
-        description: event.description,
-        organizer: "Organizer", // Placeholder até implementarmos a tabela de organizadores
-        imageUrl: event.image_url,
-        registrationUrl:
-          event.registration_url || "https://example.com/register",
-        price: event.price,
-        capacity: event.capacity,
-        eventType: event.event_type,
-        latitude: event.latitude || undefined,
-        longitude: event.longitude || undefined,
-      }));
-      setEvents(mappedEvents);
-    }
+    if (!supabaseEvents.length) return;
+    
+    // Mapear os eventos do Supabase para o formato esperado pelo componente
+    const mappedEvents = supabaseEvents.map((event) => ({
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      location: event.location,
+      distance: event.distance,
+      participants: event.participants,
+      description: event.description,
+      organizer: "Organizer", // Placeholder até implementarmos a tabela de organizadores
+      imageUrl: event.image_url,
+      registrationUrl:
+        event.registration_url || "https://example.com/register",
+      price: event.price,
+      capacity: event.capacity,
+      eventType: event.event_type,
+      latitude: event.latitude || undefined,
+      longitude: event.longitude || undefined,
+    }));
+    setEvents(mappedEvents);
   }, [supabaseEvents]);
 
   const handleEventClick = (eventId: string) => {
@@ -69,6 +69,15 @@ const MapView = () => {
 
   const handleBackClick = () => {
     navigate("/");
+  };
+
+  const handleEventItemClick = (eventId: string) => {
+    setSelectedEventId(eventId);
+    setEventDetailsDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setEventDetailsDialogOpen(open);
   };
 
   // Find selected event
@@ -84,6 +93,7 @@ const MapView = () => {
             size="icon"
             onClick={handleBackClick}
             className="text-blue-700"
+            aria-label="Voltar para página inicial"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -94,6 +104,7 @@ const MapView = () => {
           size="sm"
           onClick={handleBackClick}
           className="flex items-center gap-2 text-blue-700 border-blue-700"
+          aria-label="Voltar para visualização em lista"
         >
           <List className="h-4 w-4" />
           <span>Visualização em Lista</span>
@@ -118,7 +129,11 @@ const MapView = () => {
                 <div
                   key={event.id}
                   className="p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
-                  onClick={() => handleEventClick(event.id)}
+                  onClick={() => handleEventItemClick(event.id)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleEventItemClick(event.id)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Ver detalhes de ${event.title}`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
@@ -164,7 +179,7 @@ const MapView = () => {
       {selectedEvent && (
         <EventDetailsDialog
           open={eventDetailsDialogOpen}
-          onOpenChange={(open: boolean) => setEventDetailsDialogOpen(open)}
+          onOpenChange={handleDialogOpenChange}
           event={selectedEvent}
         />
       )}

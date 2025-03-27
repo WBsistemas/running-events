@@ -24,6 +24,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import MultiSelect from "./MultiSelect";
 
+import { parse, format } from "date-fns";
+
 interface EditEventDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -66,15 +68,14 @@ const EditEventDialog = ({
   onSubmit = (data) => console.log("Form submitted:", data),
   event,
 }: EditEventDialogProps) => {
-  // Parse date from "Month Day, Year" format to YYYY-MM-DD for input
+
   const parseDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-    } catch (e) {
-      return "";
-    }
-  };
+
+    const parsedDate = parse(dateString, "dd/MM/yyyy", new Date());
+    const formattedDate = format(parsedDate, "yyyy-MM-dd");
+
+    return formattedDate;
+  }
 
   // Parse price from "$XX.XX" format to number
   const parsePrice = (priceString: string) => {
@@ -98,23 +99,46 @@ const EditEventDialog = ({
 
   // Update form values when event changes
   useEffect(() => {
-    if (event) {
-      form.reset({
-        title: event.title,
-        date: parseDate(event.date),
-        time: event.time,
-        location: event.location,
-        distance: event.distance,
-        capacity: String(event.capacity),
-        description: event.description,
-        imageUrl: event.imageUrl,
-        price: parsePrice(event.price),
-      });
-    }
+    if (!event) return;
+
+    form.reset({
+      title: event.title,
+      date: parseDate(event.date),
+      time: event.time,
+      location: event.location,
+      distance: event.distance,
+      capacity: String(event.capacity),
+      description: event.description,
+      imageUrl: event.imageUrl,
+      price: parsePrice(event.price),
+    });
   }, [event, form]);
 
   const handleSubmit = (data: EventFormData) => {
     onSubmit(data);
+    onOpenChange(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        onChange(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFreeEventChange = (checked: boolean | "indeterminate", onChange: (value: string) => void) => {
+    if (checked) {
+      onChange("0");
+    }
+  };
+
+  const handleCancel = () => {
     onOpenChange(false);
   };
 
@@ -148,7 +172,7 @@ const EditEventDialog = ({
                 <FormItem>
                   <FormLabel>Título do Evento</FormLabel>
                   <FormControl>
-                    <Input placeholder="Marathon 2023" {...field} />
+                    <Input placeholder="Marathon 2023" {...field} aria-label="Título do evento" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,7 +192,7 @@ const EditEventDialog = ({
                       </span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} aria-label="Data do evento" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -187,7 +211,7 @@ const EditEventDialog = ({
                       </span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} />
+                      <Input type="time" {...field} aria-label="Hora de início do evento" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -207,7 +231,7 @@ const EditEventDialog = ({
                     </span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Central Park, New York" {...field} />
+                    <Input placeholder="Central Park, New York" {...field} aria-label="Localização do evento" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -255,6 +279,7 @@ const EditEventDialog = ({
                         type="number"
                         placeholder="Máximo de participantes"
                         {...field}
+                        aria-label="Capacidade do evento"
                       />
                     </FormControl>
                     <FormMessage />
@@ -279,6 +304,7 @@ const EditEventDialog = ({
                       placeholder="Forneça detalhes sobre o evento"
                       className="min-h-[100px]"
                       {...field}
+                      aria-label="Descrição do evento"
                     />
                   </FormControl>
                   <FormMessage />
@@ -298,17 +324,9 @@ const EditEventDialog = ({
                         <Input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                field.onChange(event.target?.result);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
+                          onChange={(e) => handleFileChange(e, field.onChange)}
                           className="flex-1"
+                          aria-label="Upload de imagem do evento"
                         />
                       </div>
                       <div className="text-xs text-gray-500">
@@ -318,6 +336,7 @@ const EditEventDialog = ({
                         placeholder="https://example.com/image.jpg"
                         value={field.value || ""}
                         onChange={(e) => field.onChange(e.target.value)}
+                        aria-label="URL da imagem do evento"
                       />
                       {field.value && field.value.startsWith("data:image") && (
                         <div className="mt-2 border rounded-md p-2">
@@ -371,6 +390,7 @@ const EditEventDialog = ({
                             placeholder="0,00"
                             {...field}
                             className="flex-1"
+                            aria-label="Preço do evento"
                           />
                         </FormControl>
                       </div>
@@ -378,11 +398,8 @@ const EditEventDialog = ({
                         <Checkbox
                           id="free-event-edit"
                           checked={field.value === "0"}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              field.onChange("0");
-                            }
-                          }}
+                          onCheckedChange={(checked) => handleFreeEventChange(checked, field.onChange)}
+                          aria-label="Evento gratuito"
                         />
                         <Label
                           htmlFor="free-event-edit"
@@ -402,13 +419,15 @@ const EditEventDialog = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
+                aria-label="Cancelar edição"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 className="bg-blue-700 hover:bg-blue-800 text-white"
+                aria-label="Salvar alterações"
               >
                 Salvar Alterações
               </Button>
