@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import { useRoutes, Routes, Route } from "react-router-dom";
-import Home from "./components/Home";
+import Home from "./pages/Home";
 import MapView from "./pages/MapView";
 import routes from "tempo-routes";
 

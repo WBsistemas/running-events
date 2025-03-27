@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
-import Header from "./layout/Header";
-import SearchBar from "./search/SearchBar";
-import EventList from "./events/EventList";
-import EventDetailsDialog from "./events/EventDetailsDialog";
-import AddEventDialog from "./events/AddEventDialog";
-import EditEventDialog from "./events/EditEventDialog";
-import FloatingActionButton from "./layout/FloatingActionButton";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+import Header from "../components/layout/Header";
+import SearchBar from "../components/search/SearchBar";
+import EventList from "../components/events/EventList";
+import EventDetailsDialog from "../components/events/EventDetailsDialog";
+import AddEventDialog from "../components/events/AddEventDialog";
+import EditEventDialog from "../components/events/EditEventDialog";
+import FloatingActionButton from "../components/layout/FloatingActionButton";
+import { Button } from "../components/ui/button";
+import { useToast } from "../components/ui/use-toast";
 import { EventService } from "@/services/supabaseService";
 import { Toaster } from "@/components/ui/toaster";
 
