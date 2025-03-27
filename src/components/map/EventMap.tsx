@@ -20,7 +20,17 @@ interface EventMapProps {
 }
 
 const EventMap = ({ events = [], onEventClick = () => {} }: EventMapProps) => {
-  return <MapLibreMap events={events} onEventClick={onEventClick} />;
+  const handleEventClick = (eventId: string) => {
+    onEventClick(eventId);
+  };
+
+  return (
+    <MapLibreMap 
+      events={events} 
+      onEventClick={handleEventClick} 
+      aria-label="Mapa de eventos de corrida"
+    />
+  );
 };
 
 export default EventMap;

@@ -18,11 +18,13 @@ interface Event {
 interface MapLibreMapProps {
   events?: Event[];
   onEventClick?: (eventId: string) => void;
+  "aria-label"?: string;
 }
 
 const MapLibreMap = ({
   events = [],
   onEventClick = () => { },
+  "aria-label": ariaLabel = "Map showing running events",
 }: MapLibreMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -67,7 +69,7 @@ const MapLibreMap = ({
     };
 
     initializeMap();
-  }, []);
+  }, [map]);
 
   // Helper function to get coordinates for an event
   const getEventCoordinates = async (
@@ -123,6 +125,15 @@ const MapLibreMap = ({
     return [lng, lat];
   };
 
+  const handleEventDetailsClick = (eventId: string, popup: any) => {
+    onEventClick(eventId);
+    popup.remove();
+  };
+
+  const handleMarkerClick = (marker: any) => {
+    marker.togglePopup();
+  };
+
   // Add markers for events
   useEffect(() => {
     if (!map || !mapLoaded || !events.length) return;
@@ -169,6 +180,9 @@ const MapLibreMap = ({
           markerElement.style.justifyContent = "center";
           markerElement.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
           markerElement.style.cursor = "pointer";
+          markerElement.setAttribute('role', 'button');
+          markerElement.setAttribute('aria-label', `Marker for ${event.title}`);
+          markerElement.setAttribute('tabindex', '0');
 
           // Add pin icon
           markerElement.innerHTML = `
@@ -202,7 +216,7 @@ const MapLibreMap = ({
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 12px;
-              " id="view-details-${event.id}">
+              " id="view-details-${event.id}" aria-label="View details for ${event.title}">
                 View Details
               </button>
             </div>
@@ -215,8 +229,12 @@ const MapLibreMap = ({
             .addTo(map);
 
           // Add click handler for the marker
-          markerElement.addEventListener("click", () => {
-            marker.togglePopup();
+          markerElement.addEventListener("click", () => handleMarkerClick(marker));
+          markerElement.addEventListener("keydown", (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleMarkerClick(marker);
+            }
           });
 
           // Add to markers array
@@ -233,8 +251,7 @@ const MapLibreMap = ({
               );
               if (detailsButton) {
                 detailsButton.addEventListener("click", () => {
-                  onEventClick(event.id);
-                  popup.remove();
+                  handleEventDetailsClick(event.id, popup);
                 });
               }
             }, 0);
@@ -253,10 +270,14 @@ const MapLibreMap = ({
     } catch (error) {
       console.error("Error adding markers to map:", error);
     }
-  }, [events, map, mapLoaded, onEventClick]);
+  }, [events, map, mapLoaded, onEventClick, markers]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-white">
+    <div 
+      className="w-full h-full flex flex-col bg-white" 
+      role="region" 
+      aria-label={ariaLabel}
+    >
       {!mapLoaded && (
         <div className="w-full h-full flex items-center justify-center bg-gray-100">
           <div className="text-center">
@@ -269,6 +290,7 @@ const MapLibreMap = ({
         ref={mapRef}
         className="w-full flex-1"
         style={{ minHeight: "500px" }}
+        aria-hidden={!mapLoaded}
       ></div>
     </div>
   );

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
 import Header from "./layout/Header";
 import SearchBar from "./search/SearchBar";
@@ -53,36 +52,35 @@ const Home = () => {
       setLoading(true);
       console.log("Buscando eventos do Supabase...");
 
-      // Substituir chamada direta por serviço
       const data = await EventService.getAllEvents();
 
       console.log("Eventos recebidos:", data);
 
-      if (data && data.length > 0) {
-        // Mapear os eventos - observe que não precisamos mais formatar a data aqui
-        const mappedEvents = data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          date: event.date, // Já vem formatado do serviço
-          time: event.time,
-          location: event.location,
-          distance: event.distance,
-          participants: event.participants,
-          description: event.description,
-          organizer: "Organizador", // Placeholder até implementarmos a tabela de organizadores
-          imageUrl: event.image_url,
-          registrationUrl:
-            event.registration_url || "https://example.com/register",
-          price: event.price,
-          eventType: event.event_type,
-          latitude: event.latitude || undefined,
-          longitude: event.longitude || undefined,
-          capacity: event.capacity,
-        }));
-        setEvents(mappedEvents);
-      } else {
+      if (!data || data.length === 0) {
         console.log("Nenhum evento encontrado no Supabase");
+        return;
       }
+
+      const mappedEvents = data.map((event: any) => ({
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        time: event.time,
+        location: event.location,
+        distance: event.distance,
+        participants: event.participants,
+        description: event.description,
+        organizer: "Organizador",
+        imageUrl: event.image_url,
+        registrationUrl:
+          event.registration_url || "https://example.com/register",
+        price: event.price,
+        eventType: event.event_type,
+        latitude: event.latitude || undefined,
+        longitude: event.longitude || undefined,
+        capacity: event.capacity,
+      }));
+      setEvents(mappedEvents);
     } catch (err) {
       console.error("Erro ao buscar eventos:", err);
       setError(
@@ -122,6 +120,10 @@ const Home = () => {
     setSearchTerm(term);
   };
 
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+  };
+
   const handleEventClick = (eventId: string) => {
     setSelectedEventId(eventId);
     setEventDetailsDialogOpen(true);
@@ -131,18 +133,27 @@ const Home = () => {
     setAddEventDialogOpen(true);
   };
 
+  const handleDetailsDialogOpenChange = (open: boolean) => {
+    setEventDetailsDialogOpen(open);
+  };
+
+  const handleAddDialogOpenChange = (open: boolean) => {
+    setAddEventDialogOpen(open);
+  };
+
+  const handleEditDialogOpenChange = (open: boolean) => {
+    setEditEventDialogOpen(open);
+  };
+
   const handleDeleteEvent = async (eventId: string) => {
+    if (!eventId) return;
+
     try {
       // Excluir o evento do Supabase
       await EventService.deleteEvent(eventId);
 
       // Close the details dialog
       setEventDetailsDialogOpen(false);
-
-      // Remove the event from the events array
-      setEvents((prevEvents) => {
-        return prevEvents.filter((event) => event.id !== eventId);
-      });
 
       // Clear the selected event ID
       setSelectedEventId(null);
@@ -167,6 +178,8 @@ const Home = () => {
   };
 
   const handleEditEvent = (eventId: string) => {
+    if (!eventId) return;
+
     // Find the event to edit
     const eventToEdit = events.find((event) => event.id === eventId);
     if (!eventToEdit) return;
@@ -250,7 +263,7 @@ const Home = () => {
       // Criar objeto de evento para inserção no Supabase
       const eventData = {
         title: data.title,
-        date: data.date,
+        date: data.date || null,
         time: data.time,
         location: data.location,
         distance: data.distance || "5K",
@@ -292,7 +305,7 @@ const Home = () => {
     }
   };
 
-  const clearAllFilters = () => {
+  const handleClearAllFilters = () => {
     setSearchTerm("");
   };
 
@@ -311,7 +324,7 @@ const Home = () => {
           <SearchBar
             onSearch={handleSearch}
             value={searchTerm}
-            onChange={setSearchTerm}
+            onChange={handleSearchChange}
           />
         </div>
 
@@ -329,8 +342,9 @@ const Home = () => {
               </p>
               <Button
                 variant="outline"
-                onClick={clearAllFilters}
+                onClick={handleClearAllFilters}
                 className="text-blue-600 border-blue-600"
+                aria-label="Limpar todos os filtros"
               >
                 Limpar Filtros
               </Button>
@@ -342,6 +356,7 @@ const Home = () => {
         <FloatingActionButton
           onClick={handleAddEventClick}
           icon={<Plus className="h-6 w-6 text-white" />}
+          ariaLabel="Adicionar novo evento"
         />
       </main>
 
@@ -351,23 +366,23 @@ const Home = () => {
       {selectedEvent && (
         <EventDetailsDialog
           open={eventDetailsDialogOpen}
-          onOpenChange={(open: boolean) => setEventDetailsDialogOpen(open)}
+          onOpenChange={handleDetailsDialogOpenChange}
           event={selectedEvent}
-          onDelete={(eventId?: string) => eventId && handleDeleteEvent(eventId)}
-          onEdit={(eventId?: string) => eventId && handleEditEvent(eventId)}
+          onDelete={handleDeleteEvent}
+          onEdit={handleEditEvent}
         />
       )}
 
       <AddEventDialog
         open={addEventDialogOpen}
-        onOpenChange={setAddEventDialogOpen}
+        onOpenChange={handleAddDialogOpenChange}
         onSubmit={handleAddEventSubmit}
       />
 
       {eventToEdit && (
         <EditEventDialog
           open={editEventDialogOpen}
-          onOpenChange={setEditEventDialogOpen}
+          onOpenChange={handleEditDialogOpenChange}
           onSubmit={handleEditEventSubmit}
           event={eventToEdit}
         />

@@ -39,10 +39,22 @@ const MultiSelect = ({
     onChange(newSelectedValues.join(","));
   };
 
-  const handleRemoveValue = (optionValue: string) => {
+  const handleRemoveValue = (optionValue: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     const newSelectedValues = selectedValues.filter((v) => v !== optionValue);
     setSelectedValues(newSelectedValues);
     onChange(newSelectedValues.join(","));
+  };
+
+  const handleToggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, optionValue: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggleOption(optionValue);
+    }
   };
 
   const getSelectedLabels = () => {
@@ -58,7 +70,14 @@ const MultiSelect = ({
           "flex min-h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
           className,
         )}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggleDropdown}
+        onKeyDown={(e) => e.key === 'Enter' && handleToggleDropdown()}
+        tabIndex={0}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-controls="multiselect-options"
+        aria-haspopup="listbox"
+        aria-label={placeholder}
       >
         <div className="flex flex-wrap gap-1">
           {selectedValues.length > 0 ? (
@@ -71,10 +90,10 @@ const MultiSelect = ({
                 {label}
                 <X
                   className="ml-1 h-3 w-3 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveValue(selectedValues[index]);
-                  }}
+                  onClick={(e) => handleRemoveValue(selectedValues[index], e)}
+                  aria-label={`Remover ${label}`}
+                  role="button"
+                  tabIndex={0}
                 />
               </Badge>
             ))
@@ -86,7 +105,12 @@ const MultiSelect = ({
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+        <div 
+          className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md"
+          id="multiselect-options"
+          role="listbox"
+          aria-label="Opções disponíveis"
+        >
           <div className="max-h-60 overflow-auto p-1">
             {options.map((option) => {
               const isSelected = selectedValues.includes(option.value);
@@ -98,6 +122,10 @@ const MultiSelect = ({
                     isSelected && "bg-accent/50",
                   )}
                   onClick={() => handleToggleOption(option.value)}
+                  onKeyDown={(e) => handleKeyDown(e, option.value)}
+                  role="option"
+                  aria-selected={isSelected}
+                  tabIndex={0}
                 >
                   <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                     {isSelected && <Check className="h-4 w-4" />}

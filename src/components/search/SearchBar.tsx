@@ -23,12 +23,12 @@ const SearchBar = ({
     setSearchTerm(value);
   }, [value]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchTerm);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
     if (onChange) {
@@ -38,20 +38,22 @@ const SearchBar = ({
 
   return (
     <div className="w-full max-w-[1400px] mx-auto p-4 bg-white rounded-lg shadow-sm">
-      <form onSubmit={handleSearch} className="flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="text"
             placeholder={placeholder}
             value={searchTerm}
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="pl-10 w-full bg-gray-50 border-gray-200 focus:border-blue-500"
+            aria-label="Search events"
           />
         </div>
         <Button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white"
+          aria-label="Search"
         >
           Buscar
         </Button>

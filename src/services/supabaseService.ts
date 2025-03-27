@@ -1,16 +1,31 @@
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/supabase";
+import { parseISO, format } from 'date-fns';
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
+type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
+type EventUpdate = Database["public"]["Tables"]["events"]["Update"];
 type User = Database["public"]["Tables"]["users"]["Row"];
+type EventFilters = {
+  keyword?: string;
+  eventTypes?: string[];
+  location?: string;
+};
 
-// Função de utilidade para formatar datas
-function formatDateToBrazilian(dateString: string | null): string {
+/**
+ * Formata uma data no formato ISO para o formato brasileiro (DD/MM/YYYY)
+ */
+const formatDateToBrazilian = (dateString: string | null): string => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('pt-BR');
-}
+
+  try {
+    const date = parseISO(dateString); // Garante que a data seja interpretada corretamente
+    return format(date, 'dd/MM/yyyy'); // Converte para o formato brasileiro
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return '';
+  }
+};
 
 // Serviço para gerenciar eventos
 export const EventService = {
@@ -22,18 +37,19 @@ export const EventService = {
       .order("date", { ascending: true });
 
     if (error) throw error;
+    if (!data) return [];
 
     // Formatar datas para o padrão brasileiro
-    const formattedEvents = data?.map(event => ({
+    return data.map(event => ({
       ...event,
       date: formatDateToBrazilian(event.date)
-    })) || [];
-
-    return formattedEvents;
+    }));
   },
 
   // Obter eventos filtrados
-  async getFilteredEvents(filters: any): Promise<Event[]> {
+  async getFilteredEvents(filters: EventFilters): Promise<Event[]> {
+    if (!filters) return this.getAllEvents();
+
     let query = supabase.from("events").select("*");
 
     // Aplicar filtros
@@ -57,18 +73,19 @@ export const EventService = {
     const { data, error } = await query;
 
     if (error) throw error;
+    if (!data) return [];
 
     // Formatar datas para o padrão brasileiro
-    const formattedEvents = data?.map(event => ({
+    return data.map(event => ({
       ...event,
       date: formatDateToBrazilian(event.date)
-    })) || [];
-
-    return formattedEvents;
+    }));
   },
 
   // Obter um evento por ID
   async getEventById(id: string): Promise<Event | null> {
+    if (!id) return null;
+
     const { data, error } = await supabase
       .from("events")
       .select("*")
@@ -80,21 +97,22 @@ export const EventService = {
       throw error;
     }
 
-    // Formatar data para o padrão brasileiro
-    if (data) {
-      return {
-        ...data,
-        date: formatDateToBrazilian(data.date)
-      };
-    }
+    if (!data) return null;
 
-    return data;
+    // Formatar data para o padrão brasileiro
+    return {
+      ...data,
+      date: formatDateToBrazilian(data.date)
+    };
   },
 
   // Criar um novo evento
   async createEvent(
-    eventData: Omit<Event, "id" | "created_at" | "updated_at">,
+    eventData: EventInsert,
   ): Promise<Event> {
+    if (!eventData) {
+      throw new Error("Event data is required");
+    }
 
     const { data, error } = await supabase
       .from("events")
@@ -103,12 +121,20 @@ export const EventService = {
       .single();
 
     if (error) throw error;
+    if (!data) throw new Error("Failed to create event");
 
     return data;
   },
 
   // Atualizar um evento existente
-  async updateEvent(id: string, eventData: Partial<Event>): Promise<Event> {
+  async updateEvent(id: string, eventData: EventUpdate): Promise<Event> {
+    if (!id) {
+      throw new Error("Event ID is required");
+    }
+
+    if (!eventData) {
+      throw new Error("Event data is required");
+    }
 
     const { data, error } = await supabase
       .from("events")
@@ -121,11 +147,17 @@ export const EventService = {
       .single();
 
     if (error) throw error;
+    if (!data) throw new Error("Failed to update event");
+
     return data;
   },
 
   // Excluir um evento
   async deleteEvent(id: string): Promise<void> {
+    if (!id) {
+      throw new Error("Event ID is required");
+    }
+
     const { error } = await supabase.from("events").delete().eq("id", id);
 
     if (error) throw error;
@@ -139,6 +171,7 @@ export const UserService = {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (!user) return null;
 
     const { data, error } = await supabase
@@ -151,6 +184,7 @@ export const UserService = {
       if (error.code === "PGRST116") return null; // Não encontrado
       throw error;
     }
+
     return data;
   },
 
@@ -159,6 +193,14 @@ export const UserService = {
     userId: string,
     userData: Partial<User>,
   ): Promise<User> {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    if (!userData) {
+      throw new Error("User data is required");
+    }
+
     const { data, error } = await supabase
       .from("users")
       .update(userData)
@@ -167,6 +209,8 @@ export const UserService = {
       .single();
 
     if (error) throw error;
+    if (!data) throw new Error("Failed to update user profile");
+
     return data;
   },
 };

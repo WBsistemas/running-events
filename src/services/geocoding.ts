@@ -12,6 +12,11 @@ interface GeocodingResult {
   error?: string;
 }
 
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 /**
  * Geocode an address to get coordinates
  * @param address The address to geocode
@@ -19,7 +24,9 @@ interface GeocodingResult {
  */
 export const geocodeAddress = async (
   address: string,
-): Promise<{ latitude: number; longitude: number } | null> => {
+): Promise<Coordinates | null> => {
+  if (!address || address.trim() === '') return null;
+
   try {
     // Use OpenStreetMap Nominatim API for geocoding
     const response = await fetch(
@@ -39,15 +46,15 @@ export const geocodeAddress = async (
 
     const data = await response.json();
 
-    if (data && data.length > 0) {
-      return {
-        latitude: parseFloat(data[0].lat),
-        longitude: parseFloat(data[0].lon),
-      };
+    if (!data || data.length === 0) {
+      console.warn("No geocoding results found for address:", address);
+      return null;
     }
 
-    console.warn("No geocoding results found for address:", address);
-    return null;
+    return {
+      latitude: parseFloat(data[0].lat),
+      longitude: parseFloat(data[0].lon),
+    };
   } catch (error) {
     console.error("Geocoding error:", error);
     return null;
@@ -64,6 +71,8 @@ export const reverseGeocode = async (
   latitude: number,
   longitude: number,
 ): Promise<string | null> => {
+  if (isNaN(latitude) || isNaN(longitude)) return null;
+
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
@@ -82,11 +91,11 @@ export const reverseGeocode = async (
 
     const data = await response.json();
 
-    if (data && data.display_name) {
-      return data.display_name;
+    if (!data || !data.display_name) {
+      return null;
     }
 
-    return null;
+    return data.display_name;
   } catch (error) {
     console.error("Reverse geocoding error:", error);
     return null;
@@ -97,10 +106,7 @@ export const reverseGeocode = async (
  * Get the user's current location
  * @returns Promise with the user's coordinates
  */
-export const getCurrentLocation = (): Promise<{
-  latitude: number;
-  longitude: number;
-}> => {
+export const getCurrentLocation = (): Promise<Coordinates> => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error("Geolocation is not supported by your browser"));
