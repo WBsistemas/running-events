@@ -1,7 +1,6 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import MapView from "./pages/MapView";
 import routes from "tempo-routes";
 
 function App() {
@@ -19,7 +18,6 @@ function App() {
       <>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/map" element={<MapView />} />
           {import.meta.env.VITE_TEMPO === "true" && (
             <Route path="/tempobook/*" element={<div />} />
           )}
