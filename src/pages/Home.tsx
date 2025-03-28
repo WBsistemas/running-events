@@ -9,7 +9,8 @@ import EditEventDialog from "../components/events/EditEventDialog";
 import FloatingActionButton from "../components/layout/FloatingActionButton";
 import { Button } from "../components/ui/button";
 import { useToast } from "../components/ui/use-toast";
-import { EventService } from "@/services/supabaseService";
+import { EventService } from "@/services/eventService";
+import { LocationService } from "@/services/locationService";
 import { Toaster } from "@/components/ui/toaster";
 
 interface Event {
@@ -72,8 +73,7 @@ const Home = () => {
         description: event.description,
         organizer: "Organizador",
         imageUrl: event.image_url,
-        registrationUrl:
-          event.registration_url || "https://example.com/register",
+        registrationUrl: event.registration_url || "https://example.com/register",
         price: event.price,
         eventType: event.event_type,
         latitude: event.latitude || undefined,
@@ -196,13 +196,10 @@ const Home = () => {
     if (!eventToEdit) return;
 
     try {
-      // Import the geocoding service
-      const { geocodeAddress } = await import("@/services/geocoding");
-
-      // If location changed, geocode the new location
+      // Get coordinates if location changed
       let coordinates = null;
       if (data.location !== eventToEdit.location) {
-        coordinates = await geocodeAddress(data.location);
+        coordinates = await LocationService.geocodeAddress(data.location);
       }
 
       // Use ISO format for date to avoid timestamp parsing issues
@@ -252,11 +249,8 @@ const Home = () => {
 
   const handleAddEventSubmit = async (data: any) => {
     try {
-      // Import the geocoding service
-      const { geocodeAddress } = await import("@/services/geocoding");
-
-      // Geocode the location to get coordinates
-      const coordinates = await geocodeAddress(data.location);
+      // Get coordinates for the location
+      const coordinates = await LocationService.geocodeAddress(data.location);
 
       // Use ISO format for date to avoid timestamp parsing issues
       // A data deve ser enviada como um objeto Date para o Supabas

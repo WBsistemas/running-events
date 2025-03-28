@@ -71,6 +71,8 @@ const EditEventDialog = ({
 
   const parseDate = (dateString: string) => {
 
+    if (dateString === "") return;
+
     const parsedDate = parse(dateString, "dd/MM/yyyy", new Date());
     const formattedDate = format(parsedDate, "yyyy-MM-dd");
 
@@ -86,7 +88,7 @@ const EditEventDialog = ({
   const form = useForm<EventFormData>({
     defaultValues: {
       title: event?.title || "",
-      date: event ? parseDate(event.date) : "",
+      date: event?.date ? parseDate(event.date) : "",
       time: event?.time || "",
       location: event?.location || "",
       distance: event?.distance || "",
