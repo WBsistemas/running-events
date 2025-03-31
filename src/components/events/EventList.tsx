@@ -12,12 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface Event {
   id: string;
@@ -42,7 +36,6 @@ interface EventListProps {
 const EventList = ({
   events = [],
   onEventClick = (eventId) => console.log(`Event clicked: ${eventId}`),
-  onMapViewClick = (eventId) => console.log(`Map view for event: ${eventId}`),
   featuredEvents,
 }: EventListProps) => {
   // Get view mode from localStorage or default to grid
@@ -168,11 +161,6 @@ const EventList = ({
 
   const handleEventItemClick = (eventId: string) => {
     onEventClick(eventId);
-  };
-
-  const handleMapButtonClick = (e: React.MouseEvent, eventId: string) => {
-    e.stopPropagation();
-    onMapViewClick(eventId);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, eventId: string) => {
@@ -316,27 +304,6 @@ const EventList = ({
                         >
                           Ver Detalhes
                         </Button>
-
-                        <div className="flex gap-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-gray-500 hover:text-blue-600"
-                                  onClick={(e) => handleMapButtonClick(e, event.id)}
-                                  aria-label="Ver no mapa"
-                                >
-                                  <MapPin className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Ver no mapa</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -441,21 +408,6 @@ const EventList = ({
                         >
                           Ver Detalhes
                         </Button>
-
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-blue-700 border-blue-700 hover:bg-blue-50 flex items-center gap-1"
-                            onClick={(e) => handleMapButtonClick(e, event.id)}
-                            aria-label="Ver no mapa"
-                          >
-                            <MapPin className="h-4 w-4" />
-                            <span className="hidden sm:inline">
-                              Ver no Mapa
-                            </span>
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   </div>
