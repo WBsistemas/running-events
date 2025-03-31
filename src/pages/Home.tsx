@@ -278,7 +278,7 @@ const Home = () => {
       };
 
       // Inserir o evento no Supabase
-      const result = await EventService.createEvent(eventData);
+      await EventService.createEvent(eventData);
 
       // Show success toast notification
       toast({

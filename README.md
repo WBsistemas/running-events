@@ -12,7 +12,6 @@ O projeto é construído com tecnologias modernas:
 - **Tailwind CSS** - Framework CSS utilitário
 - **Shadcn/ui** - Componentes React reutilizáveis
 - **Supabase** - Backend as a Service para banco de dados e autenticação
-- **MapLibre GL** - Biblioteca para renderização de mapas interativos
 - **React Router DOM** - Roteamento da aplicação
 
 ## 🏗️ Estrutura do Projeto
@@ -49,7 +48,6 @@ project-root/
 
 ## 🌟 Funcionalidades
 
-- 🗺️ Visualização de eventos em mapa interativo
 - 📅 Lista de eventos com filtros e busca
 - 📍 Busca por localização
 - 📝 Detalhes completos dos eventos

@@ -2,9 +2,6 @@ import { EventRepository } from "@/repositories/eventRepository";
 import { Event, EventInsert, EventUpdate, EventFilters } from "@/types/entities";
 import { parseISO, format } from 'date-fns';
 
-/**
- * Formata uma data no formato ISO para o formato brasileiro (DD/MM/YYYY)
- */
 const formatDateToBrazilian = (dateString: string | null): string => {
   if (!dateString) return '';
 
@@ -18,18 +15,16 @@ const formatDateToBrazilian = (dateString: string | null): string => {
 };
 
 export const EventService = {
-  // Obter todos os eventos
+
   async getAllEvents(): Promise<Event[]> {
     const events = await EventRepository.getAll();
 
-    // Formatar datas para o padrão brasileiro
     return events.map(event => ({
       ...event,
       date: formatDateToBrazilian(event.date)
     }));
   },
 
-  // Obter eventos filtrados
   async getFilteredEvents(filters: EventFilters): Promise<Event[]> {
     if (!filters) return this.getAllEvents();
 
@@ -39,14 +34,12 @@ export const EventService = {
       filters.location
     );
 
-    // Formatar datas para o padrão brasileiro
     return events.map(event => ({
       ...event,
       date: formatDateToBrazilian(event.date)
     }));
   },
 
-  // Obter um evento por ID
   async getEventById(id: string): Promise<Event | null> {
     if (!id) return null;
 
@@ -54,24 +47,24 @@ export const EventService = {
 
     if (!event) return null;
 
-    // Formatar data para o padrão brasileiro
     return {
       ...event,
       date: formatDateToBrazilian(event.date)
     };
   },
 
-  // Criar um novo evento
-  async createEvent(eventData: EventInsert): Promise<Event> {
+  async createEvent(eventData: EventInsert): Promise<void> {
     if (!eventData) {
       throw new Error("Event data is required");
     }
 
     const event = await EventRepository.create(eventData);
-    return event;
+
+    if (!event) {
+      throw new Error("Failed to create event");
+    }
   },
 
-  // Atualizar um evento existente
   async updateEvent(id: string, eventData: EventUpdate): Promise<Event> {
     if (!id) {
       throw new Error("Event ID is required");
@@ -81,17 +74,20 @@ export const EventService = {
       throw new Error("Event data is required");
     }
 
-    // Adicionar timestamp de atualização
     const updatedEventData = {
       ...eventData,
       updated_at: new Date().toISOString(),
     };
 
     const event = await EventRepository.update(id, updatedEventData);
+
+    if (!event) {
+      throw new Error("Failed to create event");
+    }
+
     return event;
   },
 
-  // Excluir um evento
   async deleteEvent(id: string): Promise<void> {
     if (!id) {
       throw new Error("Event ID is required");

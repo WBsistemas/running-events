@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 const Header = ({
-  title = "Eventos de Corrida",
+  title = "Movimenta Brasil",
   logoSize = 24,
   onLogoClick = () => console.log("Logo clicked"),
 }: HeaderProps) => {
