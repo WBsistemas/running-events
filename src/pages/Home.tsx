@@ -36,7 +36,7 @@ interface Event {
 // Função para converter uma string de data em objeto Date
 const parseDateString = (dateString: string): Date | null => {
   if (!dateString) return null;
-  
+
   try {
     // Verifica se a data está no formato DD/MM/YYYY
     if (dateString.includes('/')) {
@@ -44,7 +44,7 @@ const parseDateString = (dateString: string): Date | null => {
       if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
       return new Date(year, month - 1, day); // Mês em JS é zero-based
     }
-    
+
     // Tenta parsar como ISO string
     const isoDate = parseISO(dateString);
     if (isNaN(isoDate.getTime())) return null;
@@ -61,14 +61,14 @@ const eventMatchesDistanceFilter = (eventDistance: string, selectedDistances: st
   if (!eventDistance) return false;
 
   // Normalizar a distância do evento para comparação
-  const normalizedDistance = eventDistance.toUpperCase().trim();
+  const normalizedDistance = eventDistance;
 
   for (const selectedDistance of selectedDistances) {
     if (normalizedDistance.includes(selectedDistance)) {
       return true;
     }
   }
-  
+
   return false;
 };
 
@@ -83,7 +83,6 @@ const Home = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filteringInProgress, setFilteringInProgress] = useState(false);
   const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -98,8 +97,7 @@ const Home = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      // Desativar explicitamente o loading de filtros durante o carregamento inicial
-      setFilteringInProgress(false);
+
       console.log("Buscando eventos do Supabase...");
 
       const data = await EventService.getAllEvents();
@@ -132,9 +130,8 @@ const Home = () => {
         capacity: event.capacity,
       }));
       setEvents(mappedEvents);
-      
-      // Aplicar os filtros iniciais sem mostrar o loading de filtros
-      applyFilters(mappedEvents, false);
+
+      applyFilters(mappedEvents);
     } catch (err) {
       console.error("Erro ao buscar eventos:", err);
       setError(
@@ -150,11 +147,7 @@ const Home = () => {
   };
 
   // Função para aplicar filtros a um conjunto de eventos
-  const applyFilters = (eventList: Event[], showLoading = true) => {
-    if (showLoading) {
-      setFilteringInProgress(true);
-    }
-
+  const applyFilters = (eventList: Event[]) => {
     let result = [...eventList];
 
     // Aplicar filtro de termo de busca
@@ -179,11 +172,11 @@ const Home = () => {
     if (activeFilters.states.length > 0) {
       result = result.filter((event) => {
         if (!event.location) return false;
-        
+
         // Assumindo que a localização está no formato "Cidade, Estado"
         const parts = event.location.split(',').map(part => part.trim());
         const state = parts[parts.length - 1];
-        
+
         return activeFilters.states.includes(state);
       });
     }
@@ -192,11 +185,11 @@ const Home = () => {
     if (activeFilters.cities.length > 0) {
       result = result.filter((event) => {
         if (!event.location) return false;
-        
+
         // Assumindo que a localização está no formato "Cidade, Estado"
         const parts = event.location.split(',').map(part => part.trim());
         const city = parts[0];
-        
+
         return activeFilters.cities.includes(city);
       });
     }
@@ -219,25 +212,24 @@ const Home = () => {
           });
         } else if (activeFilters.dateRange.from) {
           // Verificar se a data do evento é posterior à data inicial
-          return isAfter(eventDate, activeFilters.dateRange.from) || 
-                  eventDate.getTime() === activeFilters.dateRange.from.getTime();
+          return isAfter(eventDate, activeFilters.dateRange.from) ||
+            eventDate.getTime() === activeFilters.dateRange.from.getTime();
         } else if (activeFilters.dateRange.to) {
           // Verificar se a data do evento é anterior à data final
-          return isBefore(eventDate, activeFilters.dateRange.to) || 
-                  eventDate.getTime() === activeFilters.dateRange.to.getTime();
+          return isBefore(eventDate, activeFilters.dateRange.to) ||
+            eventDate.getTime() === activeFilters.dateRange.to.getTime();
         }
-        
+
         return true;
       });
     }
 
     setFilteredEvents(result);
-    if (showLoading) {
-      setTimeout(() => {
-        setFilteringInProgress(false);
-      }, 300);
-    }
-  };
+    setTimeout(() => {
+      setLoading(false);
+    }, 300);
+  }
+
 
   // Carregar eventos quando o componente montar
   useEffect(() => {
@@ -255,7 +247,7 @@ const Home = () => {
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, events, activeFilters.distances, activeFilters.states, activeFilters.cities, activeFilters.dateRange.from, activeFilters.dateRange.to, loading]);
+  }, [searchTerm, events, activeFilters.distances, activeFilters.states, activeFilters.cities, activeFilters.dateRange.from, activeFilters.dateRange.to]);
 
   // Event handlers
   const handleSearch = (term: string) => {
@@ -483,13 +475,6 @@ const Home = () => {
               <div className="text-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
                 <p className="text-gray-600">Carregando eventos...</p>
-              </div>
-            </div>
-          ) : filteringInProgress ? (
-            <div className="w-full h-64 flex items-center justify-center bg-white rounded-lg shadow-sm mt-4">
-              <div className="text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-                <p className="text-gray-600">Aplicando filtros...</p>
               </div>
             </div>
           ) : filteredEvents.length > 0 ? (

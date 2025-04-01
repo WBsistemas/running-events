@@ -29,9 +29,9 @@ export const distanceOptions = [
   { value: "5K", label: "5K" },
   { value: "10K", label: "10K" },
   { value: "15K", label: "15K" },
-  { value: "21K", label: "21K" },
-  { value: "42K", label: "42K" },
-  { value: "Ultra Maratona", label: "Ultra Maratona" },
+  { value: "21K", label: "Meia Maratona (21K)" },
+  { value: "42K", label: "Maratona (42K)" },
+  { value: "Ultra", label: "Ultra Maratona" },
 ];
 
 // Opções de período pré-definidas
