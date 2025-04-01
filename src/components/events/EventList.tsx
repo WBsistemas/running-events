@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LayoutGrid,
@@ -12,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { slugify } from "@/utils/slugify";
 
 interface Event {
   id: string;
@@ -35,9 +37,11 @@ interface EventListProps {
 
 const EventList = ({
   events = [],
-  onEventClick = (eventId) => console.log(`Event clicked: ${eventId}`),
+  onEventClick,
   featuredEvents,
 }: EventListProps) => {
+  const navigate = useNavigate();
+
   // Get view mode from localStorage or default to grid
   const [viewMode, setViewMode] = useState(() => {
     const savedMode = localStorage.getItem("eventViewMode");
@@ -159,14 +163,22 @@ const EventList = ({
     );
   };
 
-  const handleEventItemClick = (eventId: string) => {
-    onEventClick(eventId);
+  const handleEventItemClick = (event: Event) => {
+    if (onEventClick) {
+      onEventClick(event.id);
+    } else {
+      navigate(`/event/${slugify(event.title)}`);
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, eventId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, event: Event) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onEventClick(eventId);
+      if (onEventClick) {
+        onEventClick(event.id);
+      } else {
+        navigate(`/event/${slugify(event.title)}`);
+      }
     }
   };
 
@@ -219,8 +231,8 @@ const EventList = ({
                 >
                   <div
                     className="w-full max-w-[350px] overflow-hidden rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 bg-white cursor-pointer group"
-                    onClick={() => handleEventItemClick(event.id)}
-                    onKeyDown={(e) => handleKeyDown(e, event.id)}
+                    onClick={() => handleEventItemClick(event)}
+                    onKeyDown={(e) => handleKeyDown(e, event)}
                     tabIndex={0}
                     role="button"
                     aria-label={`Ver detalhes de ${event.title}`}
@@ -299,7 +311,7 @@ const EventList = ({
                           className="text-blue-700 border-blue-700 hover:bg-blue-50"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEventItemClick(event.id);
+                            handleEventItemClick(event);
                           }}
                         >
                           Ver Detalhes
@@ -319,8 +331,8 @@ const EventList = ({
                 <div
                   key={event.id}
                   className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group"
-                  onClick={() => handleEventItemClick(event.id)}
-                  onKeyDown={(e) => handleKeyDown(e, event.id)}
+                  onClick={() => handleEventItemClick(event)}
+                  onKeyDown={(e) => handleKeyDown(e, event)}
                   tabIndex={0}
                   role="button"
                   aria-label={`Ver detalhes de ${event.title}`}
@@ -403,7 +415,7 @@ const EventList = ({
                           className="text-blue-700 border-blue-700 hover:bg-blue-50"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEventItemClick(event.id);
+                            handleEventItemClick(event);
                           }}
                         >
                           Ver Detalhes
@@ -484,8 +496,8 @@ const EventList = ({
                                 <div
                                   key={event.id}
                                   className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate hover:bg-blue-200"
-                                  onClick={() => handleEventItemClick(event.id)}
-                                  onKeyDown={(e) => handleKeyDown(e, event.id)}
+                                  onClick={() => handleEventItemClick(event)}
+                                  onKeyDown={(e) => handleKeyDown(e, event)}
                                   tabIndex={0}
                                   role="button"
                                   aria-label={`Ver detalhes de ${event.title}`}

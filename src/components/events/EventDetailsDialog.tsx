@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   MapPin,
@@ -7,6 +8,7 @@ import {
   Clock,
   Award,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -17,6 +19,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { slugify } from "@/utils/slugify";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,11 +60,19 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
   onEdit,
   event,
 }) => {
+  const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleCloseDialog = () => {
     if (onOpenChange) {
       onOpenChange(false);
+    }
+  };
+
+  const handleViewDetailsClick = () => {
+    if (event?.title) {
+      handleCloseDialog();
+      navigate(`/event/${slugify(event.title)}`);
     }
   };
 
@@ -153,11 +164,11 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <Button
               variant="outline"
-              className="w-full sm:w-auto"
-              onClick={handleCloseDialog}
-              aria-label="Fechar detalhes do evento"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+              onClick={handleViewDetailsClick}
+              aria-label="Visualizar detalhes completos do evento"
             >
-              Fechar
+              <Eye className="mr-2 h-4 w-4" /> Visualizar Detalhes
             </Button>
             <Button
               variant="destructive"
@@ -176,15 +187,6 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
               Editar Evento
             </Button>
           </div>
-          <Button
-            className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white"
-            onClick={handleRegisterClick}
-            aria-label="Inscrever-se no evento"
-            disabled={!event?.registrationUrl}
-          >
-            Inscrever-se Agora
-            <ExternalLink className="ml-2 h-4 w-4" />
-          </Button>
         </DialogFooter>
       </DialogContent>
 
