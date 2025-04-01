@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 
 interface FloatingActionButtonProps {
   onClick?: () => void;
-  icon?: React.ReactNode;
   className?: string;
   ariaLabel?: string;
+  children?: React.ReactNode;
 }
 
 const FloatingActionButton = ({
   onClick = () => console.log("FAB clicked"),
-  icon = <Plus className="h-6 w-6" />,
   className = "",
   ariaLabel = "Add new event",
+  children = <Plus className="h-6 w-6" />,
 }: FloatingActionButtonProps) => {
   const handleClick = () => {
     onClick();
@@ -27,7 +27,7 @@ const FloatingActionButton = ({
       aria-label={ariaLabel}
       tabIndex={0}
     >
-      {icon}
+      {children}
     </Button>
   );
 };

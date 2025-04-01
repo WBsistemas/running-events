@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import Header from "../components/layout/Header";
-import SearchBar from "../components/search/SearchBar";
+import SearchBar, { EventFilters } from "../components/search/SearchBar";
 import EventList from "../components/events/EventList";
 import EventDetailsDialog from "../components/events/EventDetailsDialog";
 import AddEventDialog from "../components/events/AddEventDialog";
@@ -12,6 +12,7 @@ import { useToast } from "../components/ui/use-toast";
 import { EventService } from "@/services/eventService";
 import { LocationService } from "@/services/locationService";
 import { Toaster } from "@/components/ui/toaster";
+import { parseISO, isWithinInterval, isAfter, isBefore } from "date-fns";
 
 interface Event {
   id: string;
@@ -32,6 +33,45 @@ interface Event {
   longitude?: number;
 }
 
+// Função para converter uma string de data em objeto Date
+const parseDateString = (dateString: string): Date | null => {
+  if (!dateString) return null;
+
+  try {
+    // Verifica se a data está no formato DD/MM/YYYY
+    if (dateString.includes('/')) {
+      const [day, month, year] = dateString.split('/').map(Number);
+      if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+      return new Date(year, month - 1, day); // Mês em JS é zero-based
+    }
+
+    // Tenta parsar como ISO string
+    const isoDate = parseISO(dateString);
+    if (isNaN(isoDate.getTime())) return null;
+    return isoDate;
+  } catch (error) {
+    console.error("Erro ao processar data:", error, dateString);
+    return null;
+  }
+};
+
+// Função para verificar se uma distância de evento corresponde aos filtros selecionados
+const eventMatchesDistanceFilter = (eventDistance: string, selectedDistances: string[]): boolean => {
+  if (!selectedDistances.length) return true;
+  if (!eventDistance) return false;
+
+  // Normalizar a distância do evento para comparação
+  const normalizedDistance = eventDistance;
+
+  for (const selectedDistance of selectedDistances) {
+    if (normalizedDistance.includes(selectedDistance)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const Home = () => {
   const { toast } = useToast();
 
@@ -46,11 +86,18 @@ const Home = () => {
   const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [activeFilters, setActiveFilters] = useState<EventFilters>({
+    distances: [],
+    states: [],
+    cities: [],
+    dateRange: { from: undefined, to: undefined },
+  });
 
   // Função para buscar eventos
   const fetchEvents = async () => {
     try {
       setLoading(true);
+
       console.log("Buscando eventos do Supabase...");
 
       const data = await EventService.getAllEvents();
@@ -59,6 +106,8 @@ const Home = () => {
 
       if (!data || data.length === 0) {
         console.log("Nenhum evento encontrado no Supabase");
+        setEvents([]);
+        setFilteredEvents([]);
         return;
       }
 
@@ -81,6 +130,8 @@ const Home = () => {
         capacity: event.capacity,
       }));
       setEvents(mappedEvents);
+
+      applyFilters(mappedEvents);
     } catch (err) {
       console.error("Erro ao buscar eventos:", err);
       setError(
@@ -88,20 +139,18 @@ const Home = () => {
           ? err
           : new Error("Erro desconhecido ao buscar eventos"),
       );
+      setEvents([]);
+      setFilteredEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Carregar eventos quando o componente montar
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  // Função para aplicar filtros a um conjunto de eventos
+  const applyFilters = (eventList: Event[]) => {
+    let result = [...eventList];
 
-  useEffect(() => {
-    let result = [...events];
-
-    // Apply search term filter
+    // Aplicar filtro de termo de busca
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
@@ -112,8 +161,93 @@ const Home = () => {
       );
     }
 
+    // Aplicar filtros de distância
+    if (activeFilters.distances.length > 0) {
+      result = result.filter((event) =>
+        eventMatchesDistanceFilter(event.distance, activeFilters.distances)
+      );
+    }
+
+    // Aplicar filtros de estado
+    if (activeFilters.states.length > 0) {
+      result = result.filter((event) => {
+        if (!event.location) return false;
+
+        // Assumindo que a localização está no formato "Cidade, Estado"
+        const parts = event.location.split(',').map(part => part.trim());
+        const state = parts[parts.length - 1];
+
+        return activeFilters.states.includes(state);
+      });
+    }
+
+    // Aplicar filtros de cidade
+    if (activeFilters.cities.length > 0) {
+      result = result.filter((event) => {
+        if (!event.location) return false;
+
+        // Assumindo que a localização está no formato "Cidade, Estado"
+        const parts = event.location.split(',').map(part => part.trim());
+        const city = parts[0];
+
+        return activeFilters.cities.includes(city);
+      });
+    }
+
+    // Aplicar filtros de data
+    if (activeFilters.dateRange.from || activeFilters.dateRange.to) {
+      result = result.filter((event) => {
+        // Se o evento não tiver data, não deve aparecer quando filtrado por data
+        if (!event.date) return false;
+
+        // Converter a data do evento para objeto Date
+        const eventDate = parseDateString(event.date);
+        if (!eventDate) return false;
+
+        if (activeFilters.dateRange.from && activeFilters.dateRange.to) {
+          // Verificar se a data do evento está dentro do intervalo
+          return isWithinInterval(eventDate, {
+            start: activeFilters.dateRange.from,
+            end: activeFilters.dateRange.to
+          });
+        } else if (activeFilters.dateRange.from) {
+          // Verificar se a data do evento é posterior à data inicial
+          return isAfter(eventDate, activeFilters.dateRange.from) ||
+            eventDate.getTime() === activeFilters.dateRange.from.getTime();
+        } else if (activeFilters.dateRange.to) {
+          // Verificar se a data do evento é anterior à data final
+          return isBefore(eventDate, activeFilters.dateRange.to) ||
+            eventDate.getTime() === activeFilters.dateRange.to.getTime();
+        }
+
+        return true;
+      });
+    }
+
     setFilteredEvents(result);
-  }, [searchTerm, events]);
+    setTimeout(() => {
+      setLoading(false);
+    }, 300);
+  }
+
+
+  // Carregar eventos quando o componente montar
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // Efeito para aplicar filtros aos eventos quando as dependências mudam
+  useEffect(() => {
+    if (events.length === 0 || loading) return;
+
+    // Pequeno delay para não fazer filtragem imediatamente após o carregamento
+    const timeoutId = setTimeout(() => {
+      applyFilters(events);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, events, activeFilters.distances, activeFilters.states, activeFilters.cities, activeFilters.dateRange.from, activeFilters.dateRange.to]);
 
   // Event handlers
   const handleSearch = (term: string) => {
@@ -299,8 +433,18 @@ const Home = () => {
     }
   };
 
+  const handleFiltersChange = (filters: EventFilters) => {
+    setActiveFilters(filters);
+  };
+
   const handleClearAllFilters = () => {
     setSearchTerm("");
+    setActiveFilters({
+      distances: [],
+      states: [],
+      cities: [],
+      dateRange: { from: undefined, to: undefined },
+    });
   };
 
   // Compute selected event from ID
@@ -319,12 +463,21 @@ const Home = () => {
             onSearch={handleSearch}
             value={searchTerm}
             onChange={handleSearchChange}
+            events={events}
+            onFiltersChange={handleFiltersChange}
           />
         </div>
 
         {/* Event List */}
         <div className="w-full max-w-7xl mt-2 flex-1">
-          {filteredEvents.length > 0 ? (
+          {loading ? (
+            <div className="w-full h-64 flex items-center justify-center bg-white rounded-lg shadow-sm mt-4">
+              <div className="text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+                <p className="text-gray-600">Carregando eventos...</p>
+              </div>
+            </div>
+          ) : filteredEvents.length > 0 ? (
             <EventList
               events={filteredEvents}
               onEventClick={handleEventClick}
@@ -349,38 +502,37 @@ const Home = () => {
         {/* Floating Action Button */}
         <FloatingActionButton
           onClick={handleAddEventClick}
-          icon={<Plus className="h-6 w-6 text-white" />}
           ariaLabel="Adicionar novo evento"
-        />
+        >
+          <Plus className="h-5 w-5" />
+        </FloatingActionButton>
       </main>
 
-      {/* Toast notifications */}
-      <Toaster />
+      {/* Event Details Dialog */}
+      <EventDetailsDialog
+        open={eventDetailsDialogOpen}
+        onOpenChange={handleDetailsDialogOpenChange}
+        event={selectedEvent || undefined}
+        onDelete={handleDeleteEvent}
+        onEdit={handleEditEvent}
+      />
 
-      {selectedEvent && (
-        <EventDetailsDialog
-          open={eventDetailsDialogOpen}
-          onOpenChange={handleDetailsDialogOpenChange}
-          event={selectedEvent}
-          onDelete={handleDeleteEvent}
-          onEdit={handleEditEvent}
-        />
-      )}
-
+      {/* Add Event Dialog */}
       <AddEventDialog
         open={addEventDialogOpen}
         onOpenChange={handleAddDialogOpenChange}
         onSubmit={handleAddEventSubmit}
       />
 
-      {eventToEdit && (
-        <EditEventDialog
-          open={editEventDialogOpen}
-          onOpenChange={handleEditDialogOpenChange}
-          onSubmit={handleEditEventSubmit}
-          event={eventToEdit}
-        />
-      )}
+      {/* Edit Event Dialog */}
+      <EditEventDialog
+        open={editEventDialogOpen}
+        onOpenChange={handleEditDialogOpenChange}
+        event={eventToEdit || undefined}
+        onSubmit={handleEditEventSubmit}
+      />
+
+      <Toaster />
     </div>
   );
 };
