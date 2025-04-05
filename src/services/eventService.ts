@@ -107,9 +107,43 @@ export const EventService = {
 
   async deleteEvent(id: string): Promise<void> {
     if (!id) {
+      console.error("ID do evento não fornecido para exclusão");
       throw new Error("Event ID is required");
     }
 
-    await EventRepository.delete(id);
+    try {
+      console.log(`Serviço: Iniciando exclusão do evento ${id}`);
+      
+      // Verificar se o evento existe antes de tentar excluí-lo
+      const existingEvent = await this.getEventById(id);
+      if (!existingEvent) {
+        console.error(`Serviço: Evento com ID ${id} não encontrado para exclusão`);
+        throw new Error(`Event with ID ${id} not found`);
+      }
+      
+      const success = await EventRepository.delete(id);
+      if (success) {
+        console.log(`Serviço: Evento ${id} excluído com sucesso`);
+      } else {
+        console.error(`Serviço: Falha não especificada ao excluir evento ${id}`);
+        throw new Error(`Failed to delete event with ID ${id}`);
+      }
+    } catch (error) {
+      console.error("Serviço: Erro ao excluir evento:", error);
+      throw error;
+    }
+  },
+
+  async getUserEvents(userId: string): Promise<Event[]> {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    const events = await EventRepository.getUserEvents(userId);
+
+    return events.map(event => ({
+      ...event,
+      date: formatDateToBrazilian(event.date)
+    }));
   }
 }; 

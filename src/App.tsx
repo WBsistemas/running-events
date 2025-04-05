@@ -5,6 +5,7 @@ import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
+import MyEvents from "./pages/MyEvents";
 import routes from "tempo-routes";
 import { AuthProvider } from "./lib/authContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,6 +22,7 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/my-events" element={<MyEvents />} />
             {import.meta.env.VITE_TEMPO === "true" && (
               <Route path="/tempobook/*" element={<div />} />
             )}

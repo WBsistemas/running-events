@@ -23,7 +23,7 @@ const SignIn = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onLogoClick={() => navigate("/")} />
+      <Header />
       
       <main className="container mx-auto py-10 px-4">
         <div className="max-w-md mx-auto">

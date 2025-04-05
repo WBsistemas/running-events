@@ -33,6 +33,8 @@ interface EventDetailsDialogProps {
   onOpenChange?: (open: boolean) => void;
   onDelete?: (eventId?: string) => void;
   onEdit?: (eventId?: string) => void;
+  isCreator?: boolean;
+  isAuthenticated?: boolean;
   event?: {
     id: string;
     title: string;
@@ -56,6 +58,8 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
   onDelete,
   onEdit,
   event,
+  isCreator = false,
+  isAuthenticated = false,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -159,22 +163,28 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
             >
               Fechar
             </Button>
-            <Button
-              variant="destructive"
-              className="w-full sm:w-auto"
-              onClick={handleDeleteClick}
-              aria-label="Excluir evento"
-            >
-              Excluir Evento
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
-              onClick={handleEditClick}
-              aria-label="Editar evento"
-            >
-              Editar Evento
-            </Button>
+            
+            {/* Mostrar botões de edição/exclusão apenas se o usuário for o criador */}
+            {isAuthenticated && isCreator && (
+              <>
+                <Button
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                  onClick={handleDeleteClick}
+                  aria-label="Excluir evento"
+                >
+                  Excluir Evento
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+                  onClick={handleEditClick}
+                  aria-label="Editar evento"
+                >
+                  Editar Evento
+                </Button>
+              </>
+            )}
           </div>
           <Button
             className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white"

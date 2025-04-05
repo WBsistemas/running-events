@@ -1,5 +1,5 @@
-import { MapPin, UserPlus, User, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MapPin, UserPlus, User, LogOut, CalendarDays } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/authContext";
 import {
@@ -13,18 +13,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 interface HeaderProps {
   title?: string;
   logoSize?: number;
-  onLogoClick?: () => void;
 }
 
 const Header = ({
   title = "Movimenta Brasil",
   logoSize = 24,
-  onLogoClick = () => console.log("Logo clicked"),
 }: HeaderProps) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   const handleLogoClick = () => {
-    onLogoClick();
+    navigate('/');
   };
 
   const handleSignOut = async () => {
@@ -78,6 +77,12 @@ const Header = ({
                 <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
                   <User size={16} />
                   <span>Meu Perfil</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/my-events" className="flex items-center gap-2 cursor-pointer">
+                  <CalendarDays size={16} />
+                  <span>Meus Eventos</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 cursor-pointer text-red-500">

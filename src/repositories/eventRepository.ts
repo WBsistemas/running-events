@@ -102,11 +102,38 @@ export const EventRepository = {
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from("events").delete().eq("id", id);
+    try {
+      console.log(`Tentando excluir evento com ID: ${id}`);
+      
+      // Verificar se o evento existe antes de tentar excluí-lo
+      const existingEvent = await this.getById(id);
+      if (!existingEvent) {
+        console.error(`Evento com ID ${id} não encontrado para exclusão`);
+        throw new Error(`Event with ID ${id} not found`);
+      }
+      
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", id);
 
-    if (error) throw error;
+      if (error) {
+        console.error("Erro do Supabase durante exclusão:", error);
+        console.error("Detalhes do erro:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
 
-    return true;
+      console.log(`Evento com ID ${id} excluído com sucesso`);
+      return true;
+    } catch (error) {
+      console.error("Erro no método de exclusão:", error);
+      throw error;
+    }
   },
   
   async getFiltered(keyword?: string, eventTypes?: string[], location?: string): Promise<Event[]> {
@@ -133,6 +160,22 @@ export const EventRepository = {
     const { data, error } = await query;
 
     if (error) throw error;
+    return data || [];
+  },
+
+  async getUserEvents(userId: string): Promise<Event[]> {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("creator_id", userId)
+      .order("date", { ascending: true });
+
+    if (error) throw error;
+
     return data || [];
   }
 }; 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/layout/Header";
 import SearchBar from "../components/search/SearchBar";
 import EventList from "../components/events/EventList";
@@ -16,7 +17,7 @@ import { useAuth } from "@/lib/authContext";
 import { EventsLoading } from "@/components/events/EventsLoading";
 import { EventDetailsSkeleton } from "@/components/events/EventDetailsSkeleton";
 import { EventFormSkeleton } from "@/components/events/EventFormSkeleton";
-import { useNavigate } from "react-router-dom";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 interface Event {
   id: string;
@@ -38,7 +39,7 @@ interface Event {
   creatorId?: string;
 }
 
-const Home = () => {
+const MyEvents = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -58,18 +59,21 @@ const Home = () => {
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  // Função para buscar eventos
-  const fetchEvents = async () => {
+  // Função para buscar eventos do usuário
+  const fetchUserEvents = async () => {
     try {
       setLoading(true);
-      console.log("Buscando eventos do Supabase...");
-
-      const data = await EventService.getAllEvents();
-
-      console.log("Eventos recebidos:", data);
+      if (!user || !user.id) {
+        // Usuário não está logado ou não possui ID
+        setEvents([]);
+        return;
+      }
+      
+      // Buscar apenas eventos criados pelo usuário atual
+      const data = await EventService.getUserEvents(user.id);
 
       if (!data || data.length === 0) {
-        console.log("Nenhum evento encontrado no Supabase");
+        setEvents([]);
         return;
       }
 
@@ -82,7 +86,7 @@ const Home = () => {
         distance: event.distance,
         participants: event.participants,
         description: event.description,
-        organizer: "Organizador",
+        organizer: "Você",
         imageUrl: event.image_url,
         registrationUrl: event.registration_url || "https://example.com/register",
         price: event.price,
@@ -94,11 +98,11 @@ const Home = () => {
       }));
       setEvents(mappedEvents);
     } catch (err) {
-      console.error("Erro ao buscar eventos:", err);
+      console.error("Erro ao buscar eventos do usuário:", err);
       setError(
         err instanceof Error
           ? err
-          : new Error("Erro desconhecido ao buscar eventos"),
+          : new Error("Erro desconhecido ao buscar seus eventos"),
       );
     } finally {
       setLoading(false);
@@ -107,8 +111,8 @@ const Home = () => {
 
   // Carregar eventos quando o componente montar
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    fetchUserEvents();
+  }, [user]);
 
   useEffect(() => {
     let result = [...events];
@@ -148,20 +152,6 @@ const Home = () => {
   };
 
   const handleAddEventClick = () => {
-    // Verificar se o usuário está logado antes de abrir o modal de adição
-    if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para adicionar eventos.",
-        variant: "destructive",
-      });
-      // Redirecionar para a página de login após um breve delay
-      setTimeout(() => {
-        navigate("/signin");
-      }, 1500);
-      return;
-    }
-    
     setAddFormLoading(true);
     setAddEventDialogOpen(true);
     
@@ -183,77 +173,8 @@ const Home = () => {
     setEditEventDialogOpen(open);
   };
 
-  // Verificar se o usuário é o criador do evento
-  const isEventCreator = (eventId: string) => {
-    const event = events.find(e => e.id === eventId);
-    return event && user && event.creatorId === user.id;
-  };
-
-  const handleEditEvent = (eventId: string) => {
-    if (!eventId) return;
-
-    // Verificar se o usuário está logado
-    if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para editar eventos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Verificar se o usuário é o criador do evento
-    if (!isEventCreator(eventId)) {
-      toast({
-        title: "Permissão negada",
-        description: "Você só pode editar eventos que você criou.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Find the event to edit
-    const eventToEdit = events.find((event) => event.id === eventId);
-    if (!eventToEdit) return;
-
-    // Close the details dialog
-    setEventDetailsDialogOpen(false);
-
-    // Show loading state for edit form
-    setEditFormLoading(true);
-    
-    // Open the edit dialog with the event data
-    setEventToEdit(eventToEdit);
-    setEditEventDialogOpen(true);
-    
-    // Simulate loading time for the form (remove this in production)
-    setTimeout(() => {
-      setEditFormLoading(false);
-    }, 800);
-  };
-
   const handleDeleteEvent = async (eventId: string) => {
     if (!eventId) return;
-
-    // Verificar se o usuário está logado
-    if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para excluir eventos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Verificar se o usuário é o criador do evento
-    if (!isEventCreator(eventId)) {
-      toast({
-        title: "Permissão negada",
-        description: "Você só pode excluir eventos que você criou.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
       // Set loading state
@@ -285,8 +206,8 @@ const Home = () => {
         variant: "destructive",
       });
 
-      // Recarregar eventos do Supabase para garantir sincronização
-      await fetchEvents();
+      // Recarregar eventos do usuário para garantir sincronização
+      await fetchUserEvents();
       console.log("Eventos recarregados após exclusão");
     } catch (error) {
       console.error("Erro ao excluir evento:", error);
@@ -299,6 +220,29 @@ const Home = () => {
       setLoading(false);
       console.log("Loading state redefinido após exclusão");
     }
+  };
+
+  const handleEditEvent = (eventId: string) => {
+    if (!eventId) return;
+
+    // Find the event to edit
+    const eventToEdit = events.find((event) => event.id === eventId);
+    if (!eventToEdit) return;
+
+    // Close the details dialog
+    setEventDetailsDialogOpen(false);
+
+    // Show loading state for edit form
+    setEditFormLoading(true);
+    
+    // Open the edit dialog with the event data
+    setEventToEdit(eventToEdit);
+    setEditEventDialogOpen(true);
+    
+    // Simulate loading time for the form (remove this in production)
+    setTimeout(() => {
+      setEditFormLoading(false);
+    }, 800);
   };
 
   const handleEditEventSubmit = async (data: any) => {
@@ -317,9 +261,6 @@ const Home = () => {
       // Use ISO format for date to avoid timestamp parsing issues
       const formattedDate = data.date ? data.date : null;
 
-      // Obter o usuário atual para definir como criador
-      const creatorId = user?.id;
-
       // Criar objeto de evento para atualização no Supabase
       const eventData = {
         title: data.title,
@@ -332,8 +273,7 @@ const Home = () => {
         image_url: data.imageUrl || eventToEdit.imageUrl,
         price: data.price ? `${parseFloat(data.price).toFixed(2)}` : "Free",
         event_type: eventToEdit.eventType,
-        // Adicionar creator_id se o usuário estiver logado
-        ...(creatorId && { creator_id: creatorId }),
+        creator_id: user?.id,
         // Update coordinates if we have new ones
         ...(coordinates && {
           latitude: coordinates.latitude,
@@ -351,8 +291,8 @@ const Home = () => {
         variant: "success",
       });
 
-      // Recarregar eventos do Supabase
-      await fetchEvents();
+      // Recarregar eventos do usuário
+      await fetchUserEvents();
     } catch (error) {
       console.error("Erro ao atualizar evento:", error);
       toast({
@@ -372,9 +312,6 @@ const Home = () => {
       // Get coordinates for the location
       const coordinates = await LocationService.geocodeAddress(data.location);
 
-      // Obter o usuário atual para definir como criador
-      const creatorId = user?.id;
-
       // Criar objeto de evento para inserção no Supabase
       const eventData = {
         title: data.title,
@@ -391,16 +328,13 @@ const Home = () => {
         registration_url: "https://example.com/register",
         price: data.price ? `${parseFloat(data.price).toFixed(2)}` : "Free",
         event_type: "Official Race",
-        // Adicionar creator_id se o usuário estiver logado
-        ...(creatorId && { creator_id: creatorId }),
+        creator_id: user?.id,
         // Add coordinates if geocoding was successful
         ...(coordinates && {
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
         }),
       };
-
-      console.log("Criando evento com dados:", eventData);
 
       // Inserir o evento no Supabase
       await EventService.createEvent(eventData);
@@ -412,8 +346,8 @@ const Home = () => {
         variant: "success",
       });
 
-      // Recarregar eventos do Supabase
-      await fetchEvents();
+      // Recarregar eventos do usuário
+      await fetchUserEvents();
     } catch (error) {
       console.error("Erro ao adicionar evento:", error);
       toast({
@@ -435,116 +369,137 @@ const Home = () => {
     : null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+    <ProtectedRoute>
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header />
 
-      <main className="flex-1 flex flex-col items-center px-4 pb-20">
-        {/* Search Bar */}
-        <div className="w-full max-w-7xl mt-4">
-          <SearchBar
-            onSearch={handleSearch}
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-        </div>
+        <main className="flex-1 flex flex-col items-center px-4 pb-20">
+          <div className="w-full max-w-7xl mt-6 mb-2">
+            <h1 className="text-2xl font-bold text-blue-800 mb-2">Meus Eventos</h1>
+            <p className="text-gray-600 mb-6">
+              Gerencie os eventos que você criou. Adicione, edite ou remova eventos conforme necessário.
+            </p>
+          </div>
 
-        {/* Event List or Loading State */}
-        <div className="w-full max-w-7xl mt-2 flex-1">
-          {loading ? (
-            <EventsLoading />
-          ) : filteredEvents.length > 0 ? (
-            <EventList
-              events={filteredEvents}
-              onEventClick={handleEventClick}
+          {/* Search Bar */}
+          <div className="w-full max-w-7xl">
+            <SearchBar
+              onSearch={handleSearch}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Pesquisar meus eventos..."
             />
-          ) : (
-            <div className="w-full h-64 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm mt-4">
-              <p className="text-gray-500 mb-4">
-                Nenhum evento encontrado com seus critérios
-              </p>
-              <Button
-                variant="outline"
-                onClick={handleClearAllFilters}
-                className="text-blue-600 border-blue-600"
-                aria-label="Limpar todos os filtros"
-              >
-                Limpar Filtros
-              </Button>
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* Floating Action Button - Mostrar apenas se o usuário estiver logado */}
-        {user && (
-          <FloatingActionButton
-            onClick={handleAddEventClick}
-            icon={<Plus className="h-6 w-6 text-white" />}
-            ariaLabel="Adicionar novo evento"
+          {/* Event List or Loading State */}
+          <div className="w-full max-w-7xl mt-2 flex-1">
+            {loading ? (
+              <EventsLoading />
+            ) : filteredEvents.length > 0 ? (
+              <EventList
+                events={filteredEvents}
+                onEventClick={handleEventClick}
+              />
+            ) : (
+              <div className="w-full h-64 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm mt-4">
+                <p className="text-gray-500 mb-4">
+                  {searchTerm ? 
+                   "Nenhum evento encontrado com seus critérios" : 
+                   "Você ainda não criou nenhum evento"}
+                </p>
+                {searchTerm ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleClearAllFilters}
+                    className="text-blue-600 border-blue-600 mb-4"
+                    aria-label="Limpar todos os filtros"
+                  >
+                    Limpar Filtros
+                  </Button>
+                ) : null}
+                <Button
+                  onClick={handleAddEventClick}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  aria-label="Adicionar novo evento"
+                >
+                  <Plus className="h-5 w-5 mr-2" /> Criar Meu Primeiro Evento
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Floating Action Button */}
+          {filteredEvents.length > 0 && (
+            <FloatingActionButton
+              onClick={handleAddEventClick}
+              icon={<Plus className="h-6 w-6 text-white" />}
+              ariaLabel="Adicionar novo evento"
+            />
+          )}
+        </main>
+
+        {/* Toast notifications */}
+        <Toaster />
+
+        {/* Show skeleton when loading details */}
+        {eventDetailsLoading && (
+          <EventDetailsSkeleton
+            open={eventDetailsDialogOpen}
+            onOpenChange={handleDetailsDialogOpenChange}
           />
         )}
-      </main>
 
-      {/* Toast notifications */}
-      <Toaster />
+        {/* Show actual details when not loading */}
+        {!eventDetailsLoading && selectedEvent && (
+          <EventDetailsDialog
+            open={eventDetailsDialogOpen}
+            onOpenChange={handleDetailsDialogOpenChange}
+            event={selectedEvent}
+            onDelete={handleDeleteEvent}
+            onEdit={handleEditEvent}
+            isCreator={true}
+            isAuthenticated={true}
+          />
+        )}
 
-      {/* Show skeleton when loading details */}
-      {eventDetailsLoading && (
-        <EventDetailsSkeleton
-          open={eventDetailsDialogOpen}
-          onOpenChange={handleDetailsDialogOpenChange}
-        />
-      )}
+        {/* Show add form skeleton during loading */}
+        {addFormLoading && (
+          <EventFormSkeleton
+            open={addEventDialogOpen}
+            onOpenChange={handleAddDialogOpenChange}
+          />
+        )}
 
-      {/* Show actual details when not loading */}
-      {!eventDetailsLoading && selectedEvent && (
-        <EventDetailsDialog
-          open={eventDetailsDialogOpen}
-          onOpenChange={handleDetailsDialogOpenChange}
-          event={selectedEvent}
-          onDelete={handleDeleteEvent}
-          onEdit={handleEditEvent}
-          isCreator={isEventCreator(selectedEvent.id)}
-          isAuthenticated={!!user}
-        />
-      )}
+        {/* Show actual add form when not loading */}
+        {!addFormLoading && (
+          <AddEventDialog
+            open={addEventDialogOpen}
+            onOpenChange={handleAddDialogOpenChange}
+            onSubmit={handleAddEventSubmit}
+          />
+        )}
 
-      {/* Show add form skeleton during loading */}
-      {addFormLoading && (
-        <EventFormSkeleton
-          open={addEventDialogOpen}
-          onOpenChange={handleAddDialogOpenChange}
-        />
-      )}
+        {/* Show edit form skeleton during loading */}
+        {editFormLoading && (
+          <EventFormSkeleton
+            open={editEventDialogOpen}
+            onOpenChange={handleEditDialogOpenChange}
+            isEditMode={true}
+          />
+        )}
 
-      {/* Show actual add form when not loading */}
-      {!addFormLoading && (
-        <AddEventDialog
-          open={addEventDialogOpen}
-          onOpenChange={handleAddDialogOpenChange}
-          onSubmit={handleAddEventSubmit}
-        />
-      )}
-
-      {/* Show edit form skeleton during loading */}
-      {editFormLoading && (
-        <EventFormSkeleton
-          open={editEventDialogOpen}
-          onOpenChange={handleEditDialogOpenChange}
-          isEditMode={true}
-        />
-      )}
-
-      {/* Show actual edit form when not loading */}
-      {!editFormLoading && eventToEdit && (
-        <EditEventDialog
-          open={editEventDialogOpen}
-          onOpenChange={handleEditDialogOpenChange}
-          onSubmit={handleEditEventSubmit}
-          event={eventToEdit}
-        />
-      )}
-    </div>
+        {/* Show actual edit form when not loading */}
+        {!editFormLoading && eventToEdit && (
+          <EditEventDialog
+            open={editEventDialogOpen}
+            onOpenChange={handleEditDialogOpenChange}
+            onSubmit={handleEditEventSubmit}
+            event={eventToEdit}
+          />
+        )}
+      </div>
+    </ProtectedRoute>
   );
 };
 
-export default Home;
+export default MyEvents; 

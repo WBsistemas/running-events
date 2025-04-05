@@ -76,7 +76,7 @@ const Profile = () => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
-        <Header onLogoClick={() => navigate("/")} />
+        <Header />
         
         <main className="container mx-auto py-6 px-4">
           {initialLoading ? (
