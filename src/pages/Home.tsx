@@ -13,6 +13,9 @@ import { EventService } from "@/services/eventService";
 import { LocationService } from "@/services/locationService";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/lib/authContext";
+import { EventsLoading } from "@/components/events/EventsLoading";
+import { EventDetailsSkeleton } from "@/components/events/EventDetailsSkeleton";
+import { EventFormSkeleton } from "@/components/events/EventFormSkeleton";
 
 interface Event {
   id: string;
@@ -45,6 +48,9 @@ const Home = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [eventDetailsLoading, setEventDetailsLoading] = useState(false);
+  const [addFormLoading, setAddFormLoading] = useState(false);
+  const [editFormLoading, setEditFormLoading] = useState(false);
   const [editEventDialogOpen, setEditEventDialogOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -128,11 +134,23 @@ const Home = () => {
 
   const handleEventClick = (eventId: string) => {
     setSelectedEventId(eventId);
+    setEventDetailsLoading(true);
     setEventDetailsDialogOpen(true);
+    
+    // Simulate loading time for details (remove this in production)
+    setTimeout(() => {
+      setEventDetailsLoading(false);
+    }, 1000);
   };
 
   const handleAddEventClick = () => {
+    setAddFormLoading(true);
     setAddEventDialogOpen(true);
+    
+    // Simulate loading time for the form (remove this in production)
+    setTimeout(() => {
+      setAddFormLoading(false);
+    }, 800);
   };
 
   const handleDetailsDialogOpenChange = (open: boolean) => {
@@ -151,6 +169,9 @@ const Home = () => {
     if (!eventId) return;
 
     try {
+      // Set loading state
+      setLoading(true);
+      
       // Excluir o evento do Supabase
       await EventService.deleteEvent(eventId);
 
@@ -168,7 +189,7 @@ const Home = () => {
       });
 
       // Recarregar eventos do Supabase
-      fetchEvents();
+      await fetchEvents();
     } catch (error) {
       console.error("Erro ao excluir evento:", error);
       toast({
@@ -176,6 +197,7 @@ const Home = () => {
         description: "Ocorreu um erro ao tentar excluir o evento.",
         variant: "destructive",
       });
+      setLoading(false);
     }
   };
 
@@ -189,15 +211,26 @@ const Home = () => {
     // Close the details dialog
     setEventDetailsDialogOpen(false);
 
+    // Show loading state for edit form
+    setEditFormLoading(true);
+    
     // Open the edit dialog with the event data
     setEventToEdit(eventToEdit);
     setEditEventDialogOpen(true);
+    
+    // Simulate loading time for the form (remove this in production)
+    setTimeout(() => {
+      setEditFormLoading(false);
+    }, 800);
   };
 
   const handleEditEventSubmit = async (data: any) => {
     if (!eventToEdit) return;
 
     try {
+      // Set loading state
+      setLoading(true);
+      
       // Get coordinates if location changed
       let coordinates = null;
       if (data.location !== eventToEdit.location) {
@@ -242,7 +275,7 @@ const Home = () => {
       });
 
       // Recarregar eventos do Supabase
-      fetchEvents();
+      await fetchEvents();
     } catch (error) {
       console.error("Erro ao atualizar evento:", error);
       toast({
@@ -250,11 +283,15 @@ const Home = () => {
         description: `Ocorreu um erro ao tentar atualizar o evento: ${(error as any).message || error}`,
         variant: "destructive",
       });
+      setLoading(false);
     }
   };
 
   const handleAddEventSubmit = async (data: any) => {
     try {
+      // Set loading state
+      setLoading(true);
+      
       // Get coordinates for the location
       const coordinates = await LocationService.geocodeAddress(data.location);
 
@@ -299,7 +336,7 @@ const Home = () => {
       });
 
       // Recarregar eventos do Supabase
-      fetchEvents();
+      await fetchEvents();
     } catch (error) {
       console.error("Erro ao adicionar evento:", error);
       toast({
@@ -307,6 +344,7 @@ const Home = () => {
         description: `Ocorreu um erro ao tentar adicionar o evento: ${(error as any).message || error}`,
         variant: "destructive",
       });
+      setLoading(false);
     }
   };
 
@@ -333,9 +371,11 @@ const Home = () => {
           />
         </div>
 
-        {/* Event List */}
+        {/* Event List or Loading State */}
         <div className="w-full max-w-7xl mt-2 flex-1">
-          {filteredEvents.length > 0 ? (
+          {loading ? (
+            <EventsLoading />
+          ) : filteredEvents.length > 0 ? (
             <EventList
               events={filteredEvents}
               onEventClick={handleEventClick}
@@ -368,7 +408,16 @@ const Home = () => {
       {/* Toast notifications */}
       <Toaster />
 
-      {selectedEvent && (
+      {/* Show skeleton when loading details */}
+      {eventDetailsLoading && (
+        <EventDetailsSkeleton
+          open={eventDetailsDialogOpen}
+          onOpenChange={handleDetailsDialogOpenChange}
+        />
+      )}
+
+      {/* Show actual details when not loading */}
+      {!eventDetailsLoading && selectedEvent && (
         <EventDetailsDialog
           open={eventDetailsDialogOpen}
           onOpenChange={handleDetailsDialogOpenChange}
@@ -378,13 +427,34 @@ const Home = () => {
         />
       )}
 
-      <AddEventDialog
-        open={addEventDialogOpen}
-        onOpenChange={handleAddDialogOpenChange}
-        onSubmit={handleAddEventSubmit}
-      />
+      {/* Show add form skeleton during loading */}
+      {addFormLoading && (
+        <EventFormSkeleton
+          open={addEventDialogOpen}
+          onOpenChange={handleAddDialogOpenChange}
+        />
+      )}
 
-      {eventToEdit && (
+      {/* Show actual add form when not loading */}
+      {!addFormLoading && (
+        <AddEventDialog
+          open={addEventDialogOpen}
+          onOpenChange={handleAddDialogOpenChange}
+          onSubmit={handleAddEventSubmit}
+        />
+      )}
+
+      {/* Show edit form skeleton during loading */}
+      {editFormLoading && (
+        <EventFormSkeleton
+          open={editEventDialogOpen}
+          onOpenChange={handleEditDialogOpenChange}
+          isEditMode={true}
+        />
+      )}
+
+      {/* Show actual edit form when not loading */}
+      {!editFormLoading && eventToEdit && (
         <EditEventDialog
           open={editEventDialogOpen}
           onOpenChange={handleEditDialogOpenChange}

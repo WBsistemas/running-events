@@ -3,6 +3,7 @@ import { Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { User, UserInsert } from "@/types/entities";
 import { AuthService } from "@/services/authService";
 import { UserService } from "@/services/userService";
+import { AuthLoading } from "@/components/auth/AuthLoading";
 
 type AuthContextType = {
   user: User | null;
@@ -148,6 +149,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     resetPassword,
   };
+
+  // Show loading screen while authenticating
+  if (isLoading) {
+    return <AuthLoading />;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

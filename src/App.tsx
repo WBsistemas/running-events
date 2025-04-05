@@ -8,20 +8,12 @@ import ResetPassword from "./pages/ResetPassword";
 import routes from "tempo-routes";
 import { AuthProvider } from "./lib/authContext";
 import { Toaster } from "@/components/ui/toaster";
+import { PageLoading } from "@/components/layout/PageLoading";
 
 function App() {
   return (
     <AuthProvider>
-      <Suspense
-        fallback={
-          <div className="flex h-screen w-full items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando...</p>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<PageLoading />}>
         <>
           <Routes>
             <Route path="/" element={<Home />} />
