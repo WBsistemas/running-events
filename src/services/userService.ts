@@ -1,5 +1,5 @@
 import { UserRepository } from "@/repositories/userRepository";
-import { User } from "@/types/entities";
+import { User, UserInsert } from "@/types/entities";
 
 export const UserService = {
   // Obter perfil do usuário atual
@@ -19,4 +19,13 @@ export const UserService = {
 
     return await UserRepository.updateProfile(userId, userData);
   },
+  
+  // Criar novo usuário no banco de dados
+  async createUser(userId: string, userData: Partial<UserInsert>): Promise<User> {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    return await UserRepository.createUser(userId, userData);
+  }
 }; 

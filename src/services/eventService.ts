@@ -74,18 +74,35 @@ export const EventService = {
       throw new Error("Event data is required");
     }
 
-    const updatedEventData = {
-      ...eventData,
-      updated_at: new Date().toISOString(),
-    };
+    try {
+      // Verificar se o evento existe antes de tentar atualizar
+      const existingEvent = await EventRepository.getById(id);
+      if (!existingEvent) {
+        throw new Error(`Event with ID ${id} not found`);
+      }
 
-    const event = await EventRepository.update(id, updatedEventData);
+      const updatedEventData = {
+        ...eventData,
+        updated_at: new Date().toISOString(),
+      };
 
-    if (!event) {
-      throw new Error("Failed to create event");
+      console.log("Updating event with data:", updatedEventData);
+      
+      const event = await EventRepository.update(id, updatedEventData);
+
+      if (!event) {
+        throw new Error("Failed to update event - no data returned");
+      }
+
+      return event;
+    } catch (error) {
+      console.error("Error updating event:", error);
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error("Failed to update event - unexpected error");
+      }
     }
-
-    return event;
   },
 
   async deleteEvent(id: string): Promise<void> {

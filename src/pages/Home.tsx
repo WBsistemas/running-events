@@ -12,6 +12,7 @@ import { useToast } from "../components/ui/use-toast";
 import { EventService } from "@/services/eventService";
 import { LocationService } from "@/services/locationService";
 import { Toaster } from "@/components/ui/toaster";
+import { useAuth } from "@/lib/authContext";
 
 interface Event {
   id: string;
@@ -34,6 +35,7 @@ interface Event {
 
 const Home = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // State for filters
   const [eventDetailsDialogOpen, setEventDetailsDialogOpen] = useState(false);
@@ -203,8 +205,10 @@ const Home = () => {
       }
 
       // Use ISO format for date to avoid timestamp parsing issues
-      // A data deve ser enviada como um objeto Date para o Supabase
       const formattedDate = data.date ? data.date : null;
+
+      // Obter o usuário atual para definir como criador
+      const creatorId = user?.id;
 
       // Criar objeto de evento para atualização no Supabase
       const eventData = {
@@ -218,6 +222,8 @@ const Home = () => {
         image_url: data.imageUrl || eventToEdit.imageUrl,
         price: data.price ? `${parseFloat(data.price).toFixed(2)}` : "Free",
         event_type: eventToEdit.eventType,
+        // Adicionar creator_id se o usuário estiver logado
+        ...(creatorId && { creator_id: creatorId }),
         // Update coordinates if we have new ones
         ...(coordinates && {
           latitude: coordinates.latitude,
@@ -252,8 +258,9 @@ const Home = () => {
       // Get coordinates for the location
       const coordinates = await LocationService.geocodeAddress(data.location);
 
-      // Use ISO format for date to avoid timestamp parsing issues
-      // A data deve ser enviada como um objeto Date para o Supabas
+      // Obter o usuário atual para definir como criador
+      const creatorId = user?.id;
+
       // Criar objeto de evento para inserção no Supabase
       const eventData = {
         title: data.title,
@@ -270,12 +277,16 @@ const Home = () => {
         registration_url: "https://example.com/register",
         price: data.price ? `${parseFloat(data.price).toFixed(2)}` : "Free",
         event_type: "Official Race",
+        // Adicionar creator_id se o usuário estiver logado
+        ...(creatorId && { creator_id: creatorId }),
         // Add coordinates if geocoding was successful
         ...(coordinates && {
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
         }),
       };
+
+      console.log("Criando evento com dados:", eventData);
 
       // Inserir o evento no Supabase
       await EventService.createEvent(eventData);

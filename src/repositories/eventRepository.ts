@@ -23,32 +23,82 @@ export const EventRepository = {
       .eq("id", id)
       .single();
 
-      if (error) throw error;
+    if (error) {
+      // Código PGRST116 significa "não encontrado" quando usamos .single()
+      if (error.code === "PGRST116") return null;
+      throw error;
+    }
 
-      return data;
+    return data;
   },
 
   async create(eventData: EventInsert): Promise<Event> {
-    const { data, error } = await supabase
-      .from("events")
-      .insert(eventData)
-      .select();
+    try {
+      console.log("Creating event with data:", JSON.stringify(eventData, null, 2));
+      
+      // Verificar se o usuário está autenticado
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("User not authenticated during create operation");
+        throw new Error("User not authenticated. Please log in to create events.");
+      }
 
-    if (error) throw error;
-    
-    return data[0];
+      const { data, error } = await supabase
+        .from("events")
+        .insert(eventData)
+        .select();
+
+      if (error) {
+        console.error("Supabase error during insert:", error);
+        console.error("Error details:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.error("No data returned from insert operation");
+        throw new Error("No data returned from insert operation. This may be due to Row Level Security policies.");
+      }
+      
+      console.log("Successfully created event:", data[0]);
+      return data[0];
+    } catch (error) {
+      console.error("Error in create repository method:", error);
+      throw error;
+    }
   },
 
   async update(id: string, eventData: EventUpdate): Promise<Event> {
-    const { data, error } = await supabase
-      .from("events")
-      .update(eventData)
-      .eq("id", id)
-      .select();
+    try {
+      console.log(`Updating event with ID: ${id}`);
+      console.log("Event data:", JSON.stringify(eventData, null, 2));
+      
+      const { data, error } = await supabase
+        .from("events")
+        .update(eventData)
+        .eq("id", id)
+        .select();
 
-    if (error) throw error;
-    
-    return data[0];
+      if (error) {
+        console.error("Supabase error during update:", error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.error("No data returned from update operation");
+        throw new Error("No data returned from update operation");
+      }
+      
+      console.log("Successfully updated event:", data[0]);
+      return data[0];
+    } catch (error) {
+      console.error("Error in update repository method:", error);
+      throw error;
+    }
   },
 
   async delete(id: string): Promise<boolean> {
